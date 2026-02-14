@@ -1,0 +1,177 @@
+analyze_query:
+  description: |
+    Analiza la consulta ORIGINAL del usuario sobre biodescodificación para entenderla,
+    pero SIN inventar ni añadir síntomas nuevos.
+
+    Instrucciones:
+    1. Trabaja SIEMPRE en español.
+    2. Usa únicamente el texto de la consulta proporcionada ({query}).
+    3. NO inventes ni añadas síntomas adicionales, ejemplos ni casos ficticios.
+    4. Extrae:
+       - Síntoma principal (o síntomas principales) tal como aparecen en la consulta.
+       - Partes del cuerpo implicadas (si se mencionan).
+       - Emociones o situaciones asociadas solo si el usuario las menciona explícitamente.
+    5. Devuelve un resumen estructurado que pueda usarse para buscar en el diccionario.
+
+    Input: Consulta en lenguaje natural del usuario: {query}
+    Output: Parámetros refinados de búsqueda basados EXCLUSIVAMENTE en la consulta del usuario.
+  agent: query_analyzer
+  expected_output: |
+    Un resumen breve en español que contenga:
+    - Síntoma principal
+    - Parte del cuerpo implicada (si se menciona)
+    - Palabras clave que deban usarse para buscar en el diccionario
+    - CERO síntomas inventados o añadidos.
+
+search_dictionary:
+  description: |
+    Usando los tools disponibles, busca en el diccionario de biodescodificación
+    dentro del archivo JSON procesado las entradas más relevantes para la consulta
+    ORIGINAL del usuario en español: {query}, y si es útil, también las palabras
+    clave extraídas en la tarea de análisis de consulta.
+
+    Instrucciones:
+    1. NO inventes nuevos síntomas ni consultas.
+    2. Usa principalmente los términos de la consulta del usuario, por ejemplo:
+       - vértigo
+       - miedo a las alturas
+       - oído interno
+    3. Usa el tool de búsqueda para encontrar entradas cuyo "termino",
+       "definicion", "tecnico", "sentido_biologico" o "conflicto" estén
+       relacionados con la consulta.
+  agent: dictionary_navigator
+  expected_output: |
+    Lista de entradas del diccionario relevantes (en JSON), limitada a las más importantes.
+
+score_relevance:
+  description: |
+    Rank and filter search results based on relevance to the query.
+
+    Scoring factors:
+    1. Direct keyword matches
+    2. Semantic similarity
+    3. Entry context
+    4. Entry complexity
+    5. Frequency in dictionary
+
+    Input: Raw search results from Dictionary Navigation Expert
+    Output: Ranked list of relevant entries
+  agent: relevance_scorer
+  expected_output: |
+    Ranked search results with:
+    - Entry scores
+    - Relevance ranking
+    - Confidence levels
+    - Scoring methodology
+
+expand_query:
+  description: |
+    Expand the original query with synonyms and related terms to improve coverage.
+
+    Techniques:
+    1. Synonym expansion
+    2. Related concept identification
+    3. Domain vocabulary expansion
+    4. Semantic network traversal
+
+    Input: Original query and current results
+    Output: Enhanced query with expanded terms
+  agent: synonym_expander
+  expected_output: |
+    Expanded query with:
+    - Synonyms
+    - Related terms
+    - Concept expansions
+    - Semantic connections
+
+adapt_context:
+  description: |
+    Adapt search strategy based on conversation history and user session.
+
+    Considerations:
+    1. Previous queries in session
+    2. User interaction patterns
+    3. Contextual understanding
+    4. Personalization needs
+
+    Input: Current query and session history
+    Output: Context-aware search adaptation
+  agent: context_manager
+  expected_output: |
+    Context-adapted search parameters with:
+    - Session history
+    - Personalization adjustments
+    - Adaptive strategies
+    - Pattern recognition
+
+validate_results:
+  description: |
+    Validate the quality and accuracy of search results.
+
+    Validation steps:
+    1. Consistency check
+    2. Accuracy verification
+    3. Quality assurance
+    4. Relevance confirmation
+
+    Input: Final ranked results
+    Output: Validated and quality-assured results
+  agent: validator
+  expected_output: |
+    Validated search results with:
+    - Quality scores
+    - Accuracy verification
+    - Consistency checks
+    - Final confidence level
+
+generate_answer:
+  description: |
+    A partir de la consulta del usuario en español ({query}) y de las
+    entradas del diccionario obtenidas por las tareas anteriores,
+    genera una explicación clara y estructurada.
+
+    Instrucciones:
+    1. Trabaja SIEMPRE en español.
+    2. NO inventes nuevos síntomas ni casos; habla SOLO del síntoma que el
+       usuario ha expresado y de las entradas del diccionario proporcionadas.
+    3. Usa principalmente las entradas más relacionadas con la consulta, por ejemplo:
+       - VÉRTIGO
+       - MIEDO a las ALTURAS
+       - OÍDO INTERNO
+    4. Para cada entrada relevante:
+       - Resume brevemente 'definicion'.
+       - Explica en lenguaje sencillo 'tecnico'.
+       - Explica el 'sentido_biologico'.
+       - Resume el 'conflicto' en términos emocionales comprensibles.
+    5. Usa el campo 'referencias_cruzadas' para ampliar la respuesta:
+       - Si hay pocas entradas y el texto no es muy largo, puedes integrar de forma breve
+         las referencias cruzadas dentro de la explicación.
+       - Si la respuesta se vuelve muy extensa, ENUMERA las referencias cruzadas al final
+         como lista de temas que el usuario puede explorar por separado.
+    6. Si encuentras varias entradas relacionadas (como VÉRTIGO, MIEDO a las ALTURAS,
+       ACROFOBIA, OÍDO INTERNO), explica primero la que más coincide con el síntoma central
+       y luego menciona las demás como posibles matices o temas relacionados.
+    7. Termina SIEMPRE con un aviso claro de que esta información NO sustituye
+       diagnóstico ni tratamiento médico profesional.
+
+    Formato sugerido:
+    1. Breve resumen del síntoma del usuario.
+    2. Explicación principal según biodescodificación (entrada más relevante).
+    3. Otros matices relacionados (otras entradas relevantes).
+    4. Lista de referencias cruzadas para que el usuario pueda seguir investigando.
+    5. Aviso de responsabilidad (no es consejo médico).
+
+    Si no encuentras nada realmente relacionado, dilo explícitamente y
+    sugiere reformular la pregunta o consultar a un profesional.
+  agent: explainer
+  expected_output: |
+    Explicación en texto corrido en español, bien estructurada, que
+    integre la información de las entradas del diccionario y la
+    consulta del usuario, terminando con un aviso de que no es
+    consejo médico.
+  context:
+    - analyze_query_task
+    - search_dictionary_task
+    - score_relevance_task
+    - adapt_context_task
+    - validate_results_task

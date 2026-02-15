@@ -15,7 +15,7 @@ dictionary_navigator:
     Sabes cómo navegar de manera eficiente por entradas complejas de biodescodificación
     usando coincidencias exactas, coincidencias difusas y similitud semántica.
   language: "es"
-  verbose: true
+  verbose: false
 
 relevance_scorer:
   role: "Analista de puntuación de relevancia"
@@ -25,7 +25,7 @@ relevance_scorer:
     Evalúas la relevancia de las entradas del diccionario basándote en múltiples factores,
     incluyendo coincidencias de palabras clave, similitud semántica e importancia contextual.
   language: "es"
-  verbose: true
+  verbose: false
 
 synonym_expander:
   role: "Especialista en sinónimos y términos relacionados"
@@ -35,7 +35,7 @@ synonym_expander:
     Comprendes la terminología de biodescodificación y puedes sugerir
     conceptos relacionados que ayuden a encontrar entradas relevantes.
   language: "es"
-  verbose: true
+  verbose: false
 
 context_manager:
   role: "Gestor de contexto conversacional"
@@ -45,7 +45,7 @@ context_manager:
     Registras consultas previas y adaptas las estrategias de búsqueda en función
     de los patrones de interacción del usuario y del historial de la sesión.
   language: "es"
-  verbose: true
+  verbose: false
 
 validator:
   role: "Validador de resultados de búsqueda"
@@ -55,7 +55,7 @@ validator:
     Verificas que los resultados de búsqueda sean exactos, relevantes
     y coherentes con el contenido del diccionario de biodescodificación.
   language: "es"
-  verbose: true
+  verbose: false
 
 explainer:
   role: "Experto en biodescodificación"

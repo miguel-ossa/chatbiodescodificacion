@@ -2,17 +2,13 @@ from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task, crew
 from crewai import LLM
 from dotenv import load_dotenv
-import json
 import os
 
-from chatbiodescodificacion.config import ENTRADAS_JSON
 # Import the tools to make them available
 from .tools.tools import (
     TextAnalyzerTool,
     BiodescodificationThesaurusTool,
     DictionarySearchTool,
-    VectorDatabaseTool,
-    FuzzyMatcherTool,
     RankingAlgorithmTool,
     SemanticScoringTool,
     ContextAnalyzerTool,
@@ -188,7 +184,7 @@ class Chatbiodescodificacion():
                 "query": query,
                 "session_history": session_history,
                 "results": result.raw,
-                "final_output": result.output
+                "final_output": result.raw
             }
         except Exception as e:
             return {

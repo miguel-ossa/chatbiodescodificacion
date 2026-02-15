@@ -6,7 +6,15 @@ from crewai.tools import BaseTool
 from typing import List, Dict, Any
 import os
 import json
+import unicodedata
 from chatbiodescodificacion.config import ENTRADAS_JSON
+
+def normalize(text: str) -> str:
+    """Pasa a minúsculas y elimina tildes/diacríticos."""
+    text = text.lower()
+    text = unicodedata.normalize("NFD", text)
+    return "".join(c for c in text if unicodedata.category(c) != "Mn")
+
 
 class TextAnalyzerTool(BaseTool):
     name: str = "Text Analyzer"
@@ -25,12 +33,48 @@ class BiodescodificationThesaurusTool(BaseTool):
         return f"Synonyms and related terms for: '{query}'"
 
 class DictionarySearchTool(BaseTool):
-    name: str = "Dictionary Search"
-    description: str = "Searches the biodescodification dictionary for matching entries"
+    name: str = "dictionary_search"
+    description: str = "Busca entradas en el diccionario JSON procesado por el campo 'termino'."
 
-    def _run(self, query: str) -> str:
-        # In a real implementation, this would search through the dictionary files
-        return f"Searching dictionary for: '{query}'"
+    def _run(self, query: str) -> List[Dict[str, Any]]:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        json_path = os.path.join(base_dir, ENTRADAS_JSON)
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            entradas = json.load(f)
+
+        q = normalize(query.strip())
+        resultados_exactos: List[Dict[str, Any]] = []
+        resultados_parciales: List[Dict[str, Any]] = []
+        resultados_contexto: List[Dict[str, Any]] = []
+
+        for entrada in entradas:
+            termino_norm = normalize(str(entrada.get("termino", "")))
+
+            # 1) Coincidencia exacta en 'termino'
+            if termino_norm == q:
+                resultados_exactos.append(entrada)
+                continue
+
+            # 2) Coincidencia parcial en 'termino'
+            if q in termino_norm:
+                resultados_parciales.append(entrada)
+                continue
+
+            # 3) (Opcional) búsqueda laxa en otros campos
+            texto_contexto = normalize(" ".join([
+                str(entrada.get("definicion", "")),
+                str(entrada.get("tecnico", "")),
+                str(entrada.get("sentido_biologico", "")),
+                str(entrada.get("conflicto", "")),
+                " ".join(entrada.get("referencias_cruzadas", [])),
+            ]))
+
+            if q in texto_contexto:
+                resultados_contexto.append(entrada)
+
+        resultados = resultados_exactos + resultados_parciales + resultados_contexto
+        return resultados[:5]
 
 class VectorDatabaseTool(BaseTool):
     name: str = "Vector Database Search"

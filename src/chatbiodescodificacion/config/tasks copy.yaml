@@ -44,6 +44,89 @@ search_dictionary:
   expected_output: |
     Lista de entradas del diccionario relevantes (en JSON), limitada a las más importantes.
 
+score_relevance:
+  description: |
+    Ordena y filtra los resultados de búsqueda en función de su relevancia
+    con respecto a la consulta.
+
+    Factores de puntuación:
+    1. Coincidencias directas de palabras clave
+    2. Similitud semántica
+    3. Contexto de la entrada
+    4. Complejidad de la entrada
+    5. Frecuencia en el diccionario
+
+    Input: Resultados de búsqueda en bruto del Dictionary Navigation Expert
+    Output: Lista ordenada de entradas relevantes
+  agent: relevance_scorer
+  expected_output: |
+    Resultados de búsqueda ordenados con:
+    - Puntuaciones de cada entrada
+    - Orden de relevancia
+    - Nivel de confianza
+    - Metodología de puntuación
+
+expand_query:
+  description: |
+    Expande la consulta original con sinónimos y términos relacionados para mejorar la cobertura.
+
+    Técnicas:
+    1. Expansión con sinónimos
+    2. Identificación de conceptos relacionados
+    3. Expansión con vocabulario de dominio
+    4. Exploración de redes semánticas
+
+    Input: Consulta original y resultados actuales
+    Output: Consulta ampliada con términos adicionales
+  agent: synonym_expander
+  expected_output: |
+    Consulta ampliada con:
+    - Sinónimos
+    - Términos relacionados
+    - Expansiones de concepto
+    - Conexiones semánticas
+
+adapt_context:
+  description: |
+    Adapta la estrategia de búsqueda en función del historial de conversación
+    y de la sesión del usuario.
+
+    Aspectos a considerar:
+    1. Consultas previas en la sesión
+    2. Patrones de interacción del usuario
+    3. Comprensión contextual
+    4. Necesidades de personalización
+
+    Input: Consulta actual e historial de sesión
+    Output: Adaptación de la búsqueda sensible al contexto
+  agent: context_manager
+  expected_output: |
+    Parámetros de búsqueda adaptados al contexto con:
+    - Historial de sesión
+    - Ajustes de personalización
+    - Estrategias adaptativas
+    - Patrones detectados
+
+validate_results:
+  description: |
+    Valida la calidad y la exactitud de los resultados de búsqueda.
+
+    Pasos de validación:
+    1. Comprobación de consistencia
+    2. Verificación de exactitud
+    3. Control de calidad
+    4. Confirmación de relevancia
+
+    Input: Resultados finales ordenados
+    Output: Resultados validados y con garantía de calidad
+  agent: validator
+  expected_output: |
+    Resultados de búsqueda validados con:
+    - Puntuaciones de calidad
+    - Verificación de exactitud
+    - Comprobaciones de consistencia
+    - Nivel de confianza final
+
 generate_answer:
   description: |
     A partir de la consulta del usuario en español ({query}) y de las
@@ -81,8 +164,7 @@ generate_answer:
     2. Explicación principal según biodescodificación (entrada más relevante).
     3. Otros matices relacionados (otras entradas relevantes).
     4. Lista de referencias cruzadas para que el usuario pueda seguir investigando.
-    5. Elabora una posible interpretación relacionando todos los términos encontrados.
-    6. Aviso de responsabilidad (no es consejo médico).
+    5. Aviso de responsabilidad (no es consejo médico).
 
     Si no encuentras nada realmente relacionado, dilo explícitamente y
     sugiere reformular la pregunta o consultar a un profesional.
@@ -95,3 +177,6 @@ generate_answer:
   context:
     - analyze_query_task
     - search_dictionary_task
+    - score_relevance_task
+    - adapt_context_task
+    - validate_results_task

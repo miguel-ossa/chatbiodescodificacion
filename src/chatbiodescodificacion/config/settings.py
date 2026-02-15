@@ -85,10 +85,10 @@ MAX_TOKENS_RESPUESTA = 5000
 # )
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://192.168.1.80:11434")
-OLLAMA_MODEL = "mistral"
+OLLAMA_MODEL = "gpt-4o"
 
 OLLAMA_OPTIONS = {
-    "temperature": 0.3,
+    "temperature": 0.7,
     "top_p": 0.9,
     "num_predict": MAX_TOKENS_RESPUESTA,
     "repeat_penalty": 1.1,

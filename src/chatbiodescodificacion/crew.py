@@ -1,10 +1,11 @@
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task, crew
 from crewai import LLM
-
+from dotenv import load_dotenv
 import json
 import os
 
+from chatbiodescodificacion.config import ENTRADAS_JSON
 # Import the tools to make them available
 from .tools.tools import (
     TextAnalyzerTool,
@@ -26,7 +27,21 @@ from .tools.tools import (
     QualityAssuranceTool
 )
 
-default_llm = LLM(model="gpt-4o")
+load_dotenv(override=True)
+# Get the Ollama host from environment
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+
+# Create a custom function to get the LLM with Ollama settings
+def get_ollama_llm():
+    return LLM(
+        model="gpt-oss:120b-cloud",        # el nombre del modelo en Ollama
+        base_url=f"{OLLAMA_HOST}/v1",  # endpoint OpenAI-compatible de Ollama
+        api_key="ollama",          # valor dummy, Ollama no lo valida
+        provider="openai",         # o explícitamente "openai" para la API-compatible
+        # o bien: provider="custom" en versiones nuevas, según docs
+    )
+
+default_llm = "gpt-4o"
 
 @CrewBase
 class Chatbiodescodificacion():
@@ -37,7 +52,8 @@ class Chatbiodescodificacion():
     def query_analyzer(self) -> Agent:
         return Agent(
             config=self.agents_config['query_analyzer'],
-            tools=[TextAnalyzerTool(), BiodescodificationThesaurusTool()]
+            tools=[TextAnalyzerTool(), BiodescodificationThesaurusTool()],
+            llm=get_ollama_llm()
         )
 
     @agent
@@ -45,35 +61,40 @@ class Chatbiodescodificacion():
         return Agent(
             config=self.agents_config['dictionary_navigator'],
             #tools=[DictionarySearchTool(), VectorDatabaseTool(), FuzzyMatcherTool()]
-            tools=[DictionarySearchTool()]
+            tools=[DictionarySearchTool()],
+            llm=get_ollama_llm()
         )
 
     @agent
     def relevance_scorer(self) -> Agent:
         return Agent(
             config=self.agents_config['relevance_scorer'],
-            tools=[RankingAlgorithmTool(), SemanticScoringTool(), ContextAnalyzerTool()]
+            tools=[RankingAlgorithmTool(), SemanticScoringTool(), ContextAnalyzerTool()],
+            llm=get_ollama_llm()
         )
 
     @agent
     def synonym_expander(self) -> Agent:
         return Agent(
             config=self.agents_config['synonym_expander'],
-            tools=[ThesaurusTool(), WordEmbeddingTool(), DomainVocabularyTool()]
+            tools=[ThesaurusTool(), WordEmbeddingTool(), DomainVocabularyTool()],
+            llm=get_ollama_llm()
         )
 
     @agent
     def context_manager(self) -> Agent:
         return Agent(
             config=self.agents_config['context_manager'],
-            tools=[MemoryRetrievalTool(), ConversationTrackerTool(), PersonalizationTool()]
+            tools=[MemoryRetrievalTool(), ConversationTrackerTool(), PersonalizationTool()],
+            llm=get_ollama_llm()
         )
 
     @agent
     def validator(self) -> Agent:
         return Agent(
             config=self.agents_config['validator'],
-            tools=[ConsistencyCheckerTool(), AccuracyValidatorTool(), QualityAssuranceTool()]
+            tools=[ConsistencyCheckerTool(), AccuracyValidatorTool(), QualityAssuranceTool()],
+            llm=get_ollama_llm()
         )
 
     @agent
@@ -81,6 +102,7 @@ class Chatbiodescodificacion():
         return Agent(
             config=self.agents_config['explainer'],
             tools=[],  # de momento no necesita tools extra
+            llm=get_ollama_llm()
         )
 
     @task
@@ -91,21 +113,21 @@ class Chatbiodescodificacion():
     def search_dictionary_task(self) -> Task:
         return Task(config=self.tasks_config['search_dictionary'])
 
-    @task
-    def score_relevance_task(self) -> Task:
-        return Task(config=self.tasks_config['score_relevance'])
-
-    @task
-    def expand_query_task(self) -> Task:
-        return Task(config=self.tasks_config['expand_query'])
-
-    @task
-    def adapt_context_task(self) -> Task:
-        return Task(config=self.tasks_config['adapt_context'])
-
-    @task
-    def validate_results_task(self) -> Task:
-        return Task(config=self.tasks_config['validate_results'])
+    # @task
+    # def score_relevance_task(self) -> Task:
+    #     return Task(config=self.tasks_config['score_relevance'])
+    #
+    # @task
+    # def expand_query_task(self) -> Task:
+    #     return Task(config=self.tasks_config['expand_query'])
+    #
+    # @task
+    # def adapt_context_task(self) -> Task:
+    #     return Task(config=self.tasks_config['adapt_context'])
+    #
+    # @task
+    # def validate_results_task(self) -> Task:
+    #     return Task(config=self.tasks_config['validate_results'])
 
     @task
     def generate_answer_task(self) -> Task:
@@ -127,10 +149,10 @@ class Chatbiodescodificacion():
             tasks=[
                 self.analyze_query_task(),
                 self.search_dictionary_task(),
-                self.score_relevance_task(),
-                self.expand_query_task(),
-                self.adapt_context_task(),
-                self.validate_results_task(),
+                # self.score_relevance_task(),
+                # self.expand_query_task(),
+                # self.adapt_context_task(),
+                # self.validate_results_task(),
                 self.generate_answer_task(),
             ],
             process=Process.sequential,

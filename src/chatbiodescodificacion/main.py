@@ -1,30 +1,18 @@
 #!/usr/bin/env python
 import warnings
-import json
-
+import gradio as gr
 from chatbiodescodificacion.crew import Chatbiodescodificacion
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 crew_runner = Chatbiodescodificacion()
 
-def pretty_result(result: dict) -> str:
-    safe = {
-        "query": result.get("query"),
-        "status": "error" if result.get("error") else "ok",
-    }
-
-    if result.get("error"):
-        safe["error"] = result["error"]
-    else:
-        full = result.get("final_output") or result.get("results") or ""
-        # sin cortar:
-        safe["answer"] = full
-
-    return json.dumps(safe, ensure_ascii=False, indent=2)
-
 
 def chat_fn(message, history):
+    """
+    history: lista de dicts {"role": "...", "content": "..."} (formato messages).
+    """
+    # Construir session_history para el crew
     session_history = []
     last_user = None
     for m in history:
@@ -35,36 +23,79 @@ def chat_fn(message, history):
             last_user = None
 
     result = crew_runner.kickoff_search(message, session_history=session_history)
-
-    # Texto largo, tal cual lo generó el crew
     full = result.get("final_output") or result.get("results") or ""
 
-    return [
+    # Añadimos los dos mensajes al history
+    history = history + [
         {"role": "user", "content": message},
-        {"role": "assistant", "content": full},   # <- sin JSON alrededor
+        {"role": "assistant", "content": full},
     ]
 
-# 'query': 'Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico.'
-# 'query': 'dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho y dedo meñique o hacia la rodilla y dedos de los pies'
-#'query': 'eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano'
-# 'query': 'tengo vértigo cuando subo a sitios altos'
+    # Devolvemos: limpiar textbox + nuevo history
+    return "", history
+
+
+def limpiar_fn():
+    return []  # history vacío
+
+
+def crear_interfaz():
+    with gr.Blocks(title="Chat Biodescodificación") as interfaz:
+        gr.Markdown("# 🧬 Chat de Biodescodificación")
+
+        chat = gr.Chatbot(
+            label="Conversación",
+            height=400,
+            # en tu versión ya está en modo messages por defecto
+        )
+
+        mensaje = gr.Textbox(
+            label="Tu pregunta",
+            placeholder="Ej: ¿Qué conflictos están relacionados con problemas digestivos?",
+            scale=4,
+        )
+
+        with gr.Row():
+            boton_enviar = gr.Button("Enviar", variant="primary", scale=1)
+            boton_limpiar = gr.Button("Limpiar", variant="secondary", scale=1)
+
+        gr.Markdown("### 💡 Preguntas de ejemplo")
+        gr.Examples(
+            examples=[
+                "¿Qué es la biodescodificación?",
+                "¿Conflictos emocionales del estómago?",
+                "Sentido biológico de las alergias",
+                "Emociones y problemas de piel",
+                "¿Qué sentido biológico tiene el covid?",
+            ],
+            inputs=mensaje,
+        )
+
+        boton_enviar.click(
+            fn=chat_fn,
+            inputs=[mensaje, chat],
+            outputs=[mensaje, chat],
+        )
+
+        mensaje.submit(
+            fn=chat_fn,
+            inputs=[mensaje, chat],
+            outputs=[mensaje, chat],
+        )
+
+        boton_limpiar.click(
+            fn=limpiar_fn,
+            outputs=chat,
+        )
+
+    return interfaz
+
 
 def run():
-    import gradio as gr
-
-    demo = gr.ChatInterface(
-        fn=chat_fn,
-        title="Chat Biodescodificación",
-        description="Haz preguntas sobre síntomas desde el enfoque de biodescodificación.",
-    )
+    demo = crear_interfaz()
     demo.launch(share=True)
 
-if __name__ == "__main__":
-    import gradio as gr
 
-    demo = gr.ChatInterface(
-        fn=chat_fn,
-        title="Chat Biodescodificación",
-        description="Haz preguntas sobre síntomas desde el enfoque de biodescodificación.",
-    )
+if __name__ == "__main__":
+    demo = crear_interfaz()
     demo.launch()

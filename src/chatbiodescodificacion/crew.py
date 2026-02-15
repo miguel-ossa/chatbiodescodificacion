@@ -1,5 +1,7 @@
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task, crew
+from crewai import LLM
+
 import json
 import os
 
@@ -24,6 +26,8 @@ from .tools.tools import (
     QualityAssuranceTool
 )
 
+default_llm = LLM(model="gpt-4o")
+
 @CrewBase
 class Chatbiodescodificacion():
     agents_config = "config/agents.yaml"
@@ -40,7 +44,8 @@ class Chatbiodescodificacion():
     def dictionary_navigator(self) -> Agent:
         return Agent(
             config=self.agents_config['dictionary_navigator'],
-            tools=[DictionarySearchTool(), VectorDatabaseTool(), FuzzyMatcherTool()]
+            #tools=[DictionarySearchTool(), VectorDatabaseTool(), FuzzyMatcherTool()]
+            tools=[DictionarySearchTool()]
         )
 
     @agent
@@ -130,8 +135,8 @@ class Chatbiodescodificacion():
             ],
             process=Process.sequential,
             verbose=True,
-            planning=True,
-            planning_llm="gpt-4o"
+            #planning=True,
+            #planning_llm=default_llm
         )
 
     def kickoff_search(self, query: str, session_history: list = None) -> dict:

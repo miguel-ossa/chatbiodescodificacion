@@ -45,84 +45,86 @@ search_dictionary:
 
 score_relevance:
   description: |
-    Rank and filter search results based on relevance to the query.
+    Ordena y filtra los resultados de búsqueda en función de su relevancia
+    con respecto a la consulta.
 
-    Scoring factors:
-    1. Direct keyword matches
-    2. Semantic similarity
-    3. Entry context
-    4. Entry complexity
-    5. Frequency in dictionary
+    Factores de puntuación:
+    1. Coincidencias directas de palabras clave
+    2. Similitud semántica
+    3. Contexto de la entrada
+    4. Complejidad de la entrada
+    5. Frecuencia en el diccionario
 
-    Input: Raw search results from Dictionary Navigation Expert
-    Output: Ranked list of relevant entries
+    Input: Resultados de búsqueda en bruto del Dictionary Navigation Expert
+    Output: Lista ordenada de entradas relevantes
   agent: relevance_scorer
   expected_output: |
-    Ranked search results with:
-    - Entry scores
-    - Relevance ranking
-    - Confidence levels
-    - Scoring methodology
+    Resultados de búsqueda ordenados con:
+    - Puntuaciones de cada entrada
+    - Orden de relevancia
+    - Nivel de confianza
+    - Metodología de puntuación
 
 expand_query:
   description: |
-    Expand the original query with synonyms and related terms to improve coverage.
+    Expande la consulta original con sinónimos y términos relacionados para mejorar la cobertura.
 
-    Techniques:
-    1. Synonym expansion
-    2. Related concept identification
-    3. Domain vocabulary expansion
-    4. Semantic network traversal
+    Técnicas:
+    1. Expansión con sinónimos
+    2. Identificación de conceptos relacionados
+    3. Expansión con vocabulario de dominio
+    4. Exploración de redes semánticas
 
-    Input: Original query and current results
-    Output: Enhanced query with expanded terms
+    Input: Consulta original y resultados actuales
+    Output: Consulta ampliada con términos adicionales
   agent: synonym_expander
   expected_output: |
-    Expanded query with:
-    - Synonyms
-    - Related terms
-    - Concept expansions
-    - Semantic connections
+    Consulta ampliada con:
+    - Sinónimos
+    - Términos relacionados
+    - Expansiones de concepto
+    - Conexiones semánticas
 
 adapt_context:
   description: |
-    Adapt search strategy based on conversation history and user session.
+    Adapta la estrategia de búsqueda en función del historial de conversación
+    y de la sesión del usuario.
 
-    Considerations:
-    1. Previous queries in session
-    2. User interaction patterns
-    3. Contextual understanding
-    4. Personalization needs
+    Aspectos a considerar:
+    1. Consultas previas en la sesión
+    2. Patrones de interacción del usuario
+    3. Comprensión contextual
+    4. Necesidades de personalización
 
-    Input: Current query and session history
-    Output: Context-aware search adaptation
+    Input: Consulta actual e historial de sesión
+    Output: Adaptación de la búsqueda sensible al contexto
   agent: context_manager
   expected_output: |
-    Context-adapted search parameters with:
-    - Session history
-    - Personalization adjustments
-    - Adaptive strategies
-    - Pattern recognition
+    Parámetros de búsqueda adaptados al contexto con:
+    - Historial de sesión
+    - Ajustes de personalización
+    - Estrategias adaptativas
+    - Patrones detectados
 
 validate_results:
   description: |
-    Validate the quality and accuracy of search results.
+    Valida la calidad y la exactitud de los resultados de búsqueda.
 
-    Validation steps:
-    1. Consistency check
-    2. Accuracy verification
-    3. Quality assurance
-    4. Relevance confirmation
+    Pasos de validación:
+    1. Comprobación de consistencia
+    2. Verificación de exactitud
+    3. Control de calidad
+    4. Confirmación de relevancia
 
-    Input: Final ranked results
-    Output: Validated and quality-assured results
+    Input: Resultados finales ordenados
+    Output: Resultados validados y con garantía de calidad
   agent: validator
   expected_output: |
-    Validated search results with:
-    - Quality scores
-    - Accuracy verification
-    - Consistency checks
-    - Final confidence level
+    Resultados de búsqueda validados con:
+    - Puntuaciones de calidad
+    - Verificación de exactitud
+    - Comprobaciones de consistencia
+    - Nivel de confianza final
 
 generate_answer:
   description: |

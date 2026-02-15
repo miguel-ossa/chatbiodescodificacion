@@ -18,7 +18,9 @@ def run():
     Run the crew.
     """
     inputs = {
-        'query': 'tengo vértigo cuando subo a sitios altos'
+        'query': 'Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico.'
+        #'query': 'tengo vértigo cuando subo a sitios altos'
+
     }
 
     try:

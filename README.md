@@ -1,54 +1,48 @@
-# Chatbiodescodificacion Crew
+# Funcionalidades del Chat de Biodescodificación
 
-Welcome to the Chatbiodescodificacion Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+## Descripción General
+El Chat de Biodescodificación es una herramienta interactiva que permite consultar y entender los conceptos del método de biodescodificación. Esta aplicación ayuda a descifrar el significado biológico detrás de síntomas físicos y condiciones de salud mediante una conversación natural.
 
-## Installation
+## Funcionalidades Principales
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+### 1. Consulta de Síntomas y Condiciones de Salud
+- **Búsqueda de síntomas**: Puedes preguntar sobre cualquier síntoma o condición física que estés experimentando
+- **Análisis de patrones**: El sistema interpreta tu consulta para encontrar conexiones biológicas relevantes
+- **Consultas específicas**: Puedes hacer preguntas como "¿Qué conflictos están relacionados con problemas digestivos?" o "Sentido biológico de las alergias"
 
-First, if you haven't already, install uv:
+### 2. Exploración del Diccionario de Biodescodificación
+- **Acceso a 2096 entradas**: El diccionario contiene una amplia base de conocimiento sobre biodescodificación
+- **Búsqueda por término**: Encuentra información sobre cualquier término biológico o concepto
+- **Relaciones cruzadas**: Descubre conexiones entre diferentes conceptos y síntomas
 
-```bash
-pip install uv
-```
+### 3. Respuestas Detalladas y Personalizadas
+- **Explicaciones biológicas**: Cada respuesta incluye el sentido biológico detrás de los síntomas
+- **Conflictos emocionales**: Se relacionan los síntomas con posibles conflictos emocionales subyacentes
+- **Contexto completo**: Se proporciona información contextual sobre cada concepto
 
-Next, navigate to your project directory and install the dependencies:
+### 4. Interfaz Intuitiva
+- **Chat conversacional**: Interfaz de chat simple y fácil de usar
+- **Ejemplos predefinidos**: Incluye ejemplos para guiar la consulta
+- **Historial de conversación**: Mantiene el contexto de la conversación
+- **Limpieza de historial**: Opción para comenzar una nueva conversación
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+## Ejemplos de Consultas
+- "Desde hace 4 años tengo dolor en la articulación del dedo pulgar de las dos manos..."
+- "Dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho..."
+- "Eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano"
+- "Tengo vértigo cuando subo a sitios altos"
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+## Beneficios para el Usuario
+- **Entendimiento profundo**: Comprende el significado biológico detrás de tus síntomas
+- **Conexión emocional**: Descubre posibles conflictos emocionales relacionados
+- **Acceso rápido**: Información disponible de forma inmediata y fácil de entender
+- **Herramienta educativa**: Aprende sobre biodescodificación de manera interactiva
 
-- Modify `src/chatbiodescodificacion/config/agents.yaml` to define your agents
-- Modify `src/chatbiodescodificacion/config/tasks.yaml` to define your tasks
-- Modify `src/chatbiodescodificacion/crew.py` to add your own logic, tools and specific args
-- Modify `src/chatbiodescodificacion/main.py` to add custom inputs for your agents and tasks
+## ¿Qué puedes hacer con esta aplicación?
+1. Consultar cualquier síntoma o condición de salud
+2. Explorar conceptos biológicos del método de biodescodificación
+3. Entender las conexiones entre síntomas y conflictos emocionales
+4. Obtener explicaciones detalladas basadas en una base de conocimiento extensa
+5. Usar ejemplos para guiar tus consultas
 
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
-
-```bash
-$ crewai run
-```
-
-This command initializes the ChatBiodescodificacion Crew, assembling the agents and assigning them tasks as defined in your configuration.
-
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
-
-## Understanding Your Crew
-
-The ChatBiodescodificacion Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
-
-## Support
-
-For support, questions, or feedback regarding the Chatbiodescodificacion Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
-
-Let's create wonders together with the power and simplicity of crewAI.
+Esta aplicación es ideal para personas interesadas en el método de biodescodificación, terapeutas, profesionales de la salud y cualquier persona que desee comprender mejor el significado biológico de sus síntomas.

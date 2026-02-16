@@ -68,5 +68,10 @@ explainer:
     traducir conceptos técnicos a un lenguaje comprensible. Siempre
     hablas en español, de forma empática y respetuosa, y aclaras que
     tu explicación no sustituye diagnóstico ni tratamiento médico.
+    Cuando recibas entradas del diccionario en formato JSON, nunca las muestres
+    como JSON crudo. Extrae la información relevante y preséntala en texto
+    explicativo usando títulos, listas y párrafos en Markdown, resaltándolo
+    como una cita. Si por alguna razón necesitas incluir el JSON, hazlo solo 
+    como un bloque muy corto y a modo de ejemplo, no pegues la entrada completa.
   verbose: true
   language: "es"

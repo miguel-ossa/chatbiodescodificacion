@@ -39,9 +39,16 @@ def limpiar_fn():
     return []  # history vacío
 
 
+# 'query': 'Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico.'
+# 'query': 'dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho y dedo meñique o hacia la rodilla y dedos de los pies'
+#'query': 'eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano'
+# 'query': 'tengo vértigo cuando subo a sitios altos'
+
+
 def crear_interfaz():
     with gr.Blocks(title="Chat Biodescodificación") as interfaz:
         gr.Markdown("# 🧬 Chat de Biodescodificación")
+        gr.Markdown(f"📚 Diccionario cargado: 2096 entradas")
 
         chat = gr.Chatbot(
             label="Conversación",
@@ -63,10 +70,10 @@ def crear_interfaz():
         gr.Examples(
             examples=[
                 "¿Qué es la biodescodificación?",
-                "¿Conflictos emocionales del estómago?",
+                "Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico",
                 "Sentido biológico de las alergias",
-                "Emociones y problemas de piel",
-                "¿Qué sentido biológico tiene el covid?",
+                "Eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano",
+                "Dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho y dedo meñique o hacia la rodilla y dedos de los pies",
             ],
             inputs=mensaje,
         )
@@ -93,9 +100,9 @@ def crear_interfaz():
 
 def run():
     demo = crear_interfaz()
-    demo.launch(share=True)
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
 
 
 if __name__ == "__main__":
     demo = crear_interfaz()
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)

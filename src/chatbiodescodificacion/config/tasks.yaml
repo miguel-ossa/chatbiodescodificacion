@@ -82,7 +82,9 @@ generate_answer:
     3. Otros matices relacionados (otras entradas relevantes).
     4. Lista de referencias cruzadas para que el usuario pueda seguir investigando.
     5. Elabora una posible interpretación relacionando todos los términos encontrados.
-    6. Aviso de responsabilidad (no es consejo médico).
+    6. Sugiere un posible tratamiento personalizado, pero menciona que eso no sustituye
+       la labor de un terapeuta, y recomienda confirmarlo con un terapeuta cualificado. 
+    7. Aviso de responsabilidad (no es consejo médico).
 
     Si no encuentras nada realmente relacionado, dilo explícitamente y
     sugiere reformular la pregunta o consultar a un profesional.

@@ -42,7 +42,10 @@ search_dictionary:
        relacionados con la consulta.
   agent: dictionary_navigator
   expected_output: |
-    Lista de entradas del diccionario relevantes (en JSON), limitada a las más importantes.
+    Devuelve SIEMPRE un ÚNICO bloque de texto en español.
+    Incluye las entradas relevantes del diccionario en formato legible.
+    Si necesitas JSON, inclúyelo SOLO dentro de un bloque de texto
+    ```json ... ``` pero la respuesta principal debe ser TEXTO, no una lista JSON pura.
 
 generate_answer:
   description: |

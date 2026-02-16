@@ -37,7 +37,10 @@ def get_ollama_llm():
         # o bien: provider="custom" en versiones nuevas, según docs
     )
 
-default_llm = "gpt-4o"
+default_llm = "gpt-oss:120b-cloud"
+
+# usa un directorio seguro dentro del contenedor
+os.environ["CREWAI_STORAGE_PATH"] = "/tmp/.crewai"
 
 @CrewBase
 class Chatbiodescodificacion():

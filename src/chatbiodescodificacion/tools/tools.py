@@ -36,7 +36,7 @@ class DictionarySearchTool(BaseTool):
     name: str = "dictionary_search"
     description: str = "Busca entradas en el diccionario JSON procesado por el campo 'termino'."
 
-    def _run(self, query: str) -> List[Dict[str, Any]]:
+    def _run(self, query: str) -> str:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         json_path = os.path.join(base_dir, ENTRADAS_JSON)
 
@@ -74,7 +74,8 @@ class DictionarySearchTool(BaseTool):
                 resultados_contexto.append(entrada)
 
         resultados = resultados_exactos + resultados_parciales + resultados_contexto
-        return resultados[:5]
+        # Devuelve texto formateado, no la lista cruda
+        return json.dumps(resultados[:5], ensure_ascii=False)
 
 class VectorDatabaseTool(BaseTool):
     name: str = "Vector Database Search"

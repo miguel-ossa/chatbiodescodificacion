@@ -30,6 +30,7 @@ OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
 # Create a custom function to get the LLM with Ollama settings
 def get_ollama_llm():
+    print("OLLAMA_HOST =", OLLAMA_HOST)
     return LLM(
         model="gpt-oss:120b-cloud",        # el nombre del modelo en Ollama
         base_url=f"{OLLAMA_HOST}/v1",  # endpoint OpenAI-compatible de Ollama
@@ -173,7 +174,7 @@ class Chatbiodescodificacion():
             #planning_llm=default_llm
         )
 
-    def kickoff_search(self, query: str, session_history: list = None) -> dict:
+    def kickoff_search(self, query: str,  user_lang: str, session_history: list = None, ) -> dict:
         """
         Execute the search enhancement crew with the given query
 
@@ -187,7 +188,8 @@ class Chatbiodescodificacion():
         # Prepare inputs for the crew
         inputs = {
             "query": query,
-            "session_history": session_history or []
+            "user_lang": user_lang,
+            "session_history": session_history or [],
         }
 
         # Execute the crew

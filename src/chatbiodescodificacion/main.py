@@ -1,17 +1,29 @@
 #!/usr/bin/env python
 import warnings
+import os
 import gradio as gr
+from langdetect import detect
 from chatbiodescodificacion.crew import Chatbiodescodificacion
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
 crew_runner = Chatbiodescodificacion()
 
+def detectar_idioma(texto: str) -> str:
+    try:
+        lang = detect(texto)
+    except Exception:
+        lang = "es"
+    return lang
 
 def chat_fn(message, history):
     """
     history: lista de dicts {"role": "...", "content": "..."} (formato messages).
     """
+    print("ENV OPENAI_API_BASE =", os.getenv("OPENAI_API_BASE"))
+    print("ENV CREWAI_LLM_BASE_URL =", os.getenv("CREWAI_LLM_BASE_URL"))
+    print("ENV OLLAMA_HOST =", os.getenv("OLLAMA_HOST"))
+
     # Construir session_history para el crew
     session_history = []
     last_user = None
@@ -22,7 +34,14 @@ def chat_fn(message, history):
             session_history.append({"user": last_user, "assistant": m["content"]})
             last_user = None
 
-    result = crew_runner.kickoff_search(message, session_history=session_history)
+    user_lang = detectar_idioma(message)
+
+    result = crew_runner.kickoff_search(
+        message,
+        user_lang=user_lang,
+        session_history=session_history
+    )
+
     full = result.get("final_output") or result.get("results") or ""
 
     # Añadimos los dos mensajes al history

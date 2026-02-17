@@ -1,24 +1,28 @@
 analyze_query:
   description: |
+    La consulta del usuario puede venir en cualquier idioma.
+    Si no está en español, TRADÚCELA internamente a español solo para extraer los términos
+    de biodescodificación, pero no cambies el idioma de la respuesta final del sistema,
+    que debe ser {user_lang}.
     Analiza la consulta ORIGINAL del usuario sobre biodescodificación para entenderla,
-    pero SIN inventar ni añadir síntomas nuevos.
+    pero SIN inventar ni añadir síntomas nuevos,
+    adaptando SIEMPRE el idioma de tu respuesta al idioma del usuario detectado: {user_lang}.
 
     Instrucciones:
-    1. Trabaja SIEMPRE en español.
-    2. Usa únicamente el texto de la consulta proporcionada ({query}).
-    3. NO inventes ni añadas síntomas adicionales, ejemplos ni casos ficticios.
-    4. Extrae del diccionario proporcionado en json:
+    1. Usa únicamente el texto de la consulta proporcionada ({query}).
+    2. NO inventes ni añadas síntomas adicionales, ejemplos ni casos ficticios.
+    3. Extrae del diccionario proporcionado en json:
        - Síntoma principal (o síntomas principales) tal como aparecen en la consulta.
        - Partes del cuerpo implicadas (si se mencionan).
        - Emociones o situaciones asociadas solo si el usuario las menciona explícitamente.
        - "definicion", "tecnico", "sentido_biologico" y "conflicto"
-    5. Devuelve un resumen estructurado que pueda usarse para buscar en el diccionario.
+    4. Devuelve un resumen estructurado que pueda usarse para buscar en el diccionario.
 
     Input: Consulta en lenguaje natural del usuario: {query}
     Output: Parámetros refinados de búsqueda basados EXCLUSIVAMENTE en la consulta del usuario.
   agent: query_analyzer
   expected_output: |
-    Un resumen breve en español que contenga:
+    Un resumen breve que contenga:
     - Síntoma principal
     - Parte del cuerpo implicada (si se menciona)
     - Palabras clave que deban usarse para buscar en el diccionario
@@ -28,7 +32,7 @@ search_dictionary:
   description: |
     Usando los tools disponibles, busca en el diccionario de biodescodificación
     dentro del archivo JSON procesado las entradas más relevantes para la consulta
-    ORIGINAL del usuario en español: {query}, y si es útil, también las palabras
+    ORIGINAL del usuario: {query}, y si es útil, también las palabras
     clave extraídas en la tarea de análisis de consulta.
 
     Instrucciones:
@@ -42,7 +46,7 @@ search_dictionary:
        relacionados con la consulta.
   agent: dictionary_navigator
   expected_output: |
-    Devuelve SIEMPRE un ÚNICO bloque de texto en español, en formato explicativo.
+    Devuelve SIEMPRE un ÚNICO bloque de texto, en formato explicativo.
     - NO devuelvas listas ni objetos JSON puros.
     - NO envuelvas toda la respuesta en un bloque ```json``` con la entrada completa.
     Tu respuesta debe describir las entradas relevantes con texto legible en Markdown
@@ -50,35 +54,34 @@ search_dictionary:
 
 generate_answer:
   description: |
-    A partir de la consulta del usuario en español ({query}) y de las
+    A partir de la consulta del usuario ({query}) y de las
     entradas del diccionario obtenidas por las tareas anteriores,
     genera una explicación clara y estructurada.
 
     Instrucciones:
-    1. Trabaja SIEMPRE en español.
-    2. NO inventes nuevos síntomas ni casos; habla SOLO del síntoma que el
+    1. NO inventes nuevos síntomas ni casos; habla SOLO del síntoma que el
        usuario ha expresado extrayendo directamente las respuetas de las 
        entradas del diccionario proporcionadas.
-    3. Usa principalmente las entradas más relacionadas con la consulta, por ejemplo:
+    2. Usa principalmente las entradas más relacionadas con la consulta, por ejemplo:
        - VÉRTIGO
        - MIEDO a las ALTURAS
        - OÍDO INTERNO
-    4. Para cada entrada relevante:
+    3. Para cada entrada relevante:
        - Primero muestra la entrada completa. Luego:
        - NO muestres la entrada en formato JSON.    
        - Resume brevemente 'definicion'.
        - Explica en lenguaje sencillo 'tecnico'.
        - Explica el 'sentido_biologico'.
        - Resume el 'conflicto' en términos emocionales comprensibles.
-    5. Usa el campo 'referencias_cruzadas' para ampliar la respuesta:
+    4. Usa el campo 'referencias_cruzadas' para ampliar la respuesta:
        - Si hay pocas entradas y el texto no es muy largo, puedes integrar de forma breve
          las referencias cruzadas dentro de la explicación.
        - Si la respuesta se vuelve muy extensa, ENUMERA las referencias cruzadas al final
          como lista de temas que el usuario puede explorar por separado.
-    6. Si encuentras varias entradas relacionadas (como VÉRTIGO, MIEDO a las ALTURAS,
+    5. Si encuentras varias entradas relacionadas (como VÉRTIGO, MIEDO a las ALTURAS,
        ACROFOBIA, OÍDO INTERNO), explica primero la que más coincide con el síntoma central
        y luego menciona las demás como posibles matices o temas relacionados.
-    7. Termina SIEMPRE con un aviso claro de que esta información NO sustituye
+    6. Termina SIEMPRE con un aviso claro de que esta información NO sustituye
        diagnóstico ni tratamiento médico profesional.
 
     Formato sugerido:
@@ -95,7 +98,7 @@ generate_answer:
     sugiere reformular la pregunta o consultar a un profesional.
   agent: explainer
   expected_output: |
-    Explicación en texto corrido en español, bien estructurada, que
+    Explicación bien estructurada, que
     integre la información de las entradas del diccionario y la
     consulta del usuario, terminando con un aviso de que no es
     consejo médico.

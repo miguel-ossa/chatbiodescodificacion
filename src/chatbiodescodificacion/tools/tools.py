@@ -73,8 +73,6 @@ class DictionarySearchTool(BaseTool):
         resultados = resultados_exactos + resultados_parciales + resultados_contexto
         resultados = resultados[:5]
 
-        # ⚠️ Aquí está el cambio importante:
-        # en vez de devolver JSON crudo, devolvemos TEXTO formateado.
         if not resultados:
             return "No se encontraron entradas relevantes en el diccionario para esta consulta."
 

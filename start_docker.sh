@@ -29,6 +29,7 @@ if [ "$ANSWER" = "y" ]; then
   echo "Limpiando recursos de Docker..."
   docker system prune -af
   docker volume prune -f
+  echo
 else
   echo "Limpieza de Docker omitida."
   echo

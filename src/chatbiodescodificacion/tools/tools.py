@@ -44,24 +44,21 @@ class DictionarySearchTool(BaseTool):
             entradas = json.load(f)
 
         q = normalize(query.strip())
-        resultados_exactos: List[Dict[str, Any]] = []
-        resultados_parciales: List[Dict[str, Any]] = []
-        resultados_contexto: List[Dict[str, Any]] = []
+        resultados_exactos = []
+        resultados_parciales = []
+        resultados_contexto = []
 
         for entrada in entradas:
             termino_norm = normalize(str(entrada.get("termino", "")))
 
-            # 1) Coincidencia exacta en 'termino'
             if termino_norm == q:
                 resultados_exactos.append(entrada)
                 continue
 
-            # 2) Coincidencia parcial en 'termino'
             if q in termino_norm:
                 resultados_parciales.append(entrada)
                 continue
 
-            # 3) (Opcional) búsqueda laxa en otros campos
             texto_contexto = normalize(" ".join([
                 str(entrada.get("definicion", "")),
                 str(entrada.get("tecnico", "")),
@@ -74,8 +71,26 @@ class DictionarySearchTool(BaseTool):
                 resultados_contexto.append(entrada)
 
         resultados = resultados_exactos + resultados_parciales + resultados_contexto
-        # Devuelve texto formateado, no la lista cruda
-        return json.dumps(resultados[:5], ensure_ascii=False)
+        resultados = resultados[:5]
+
+        # ⚠️ Aquí está el cambio importante:
+        # en vez de devolver JSON crudo, devolvemos TEXTO formateado.
+        if not resultados:
+            return "No se encontraron entradas relevantes en el diccionario para esta consulta."
+
+        partes = []
+        for entrada in resultados:
+            partes.append(
+                f"Entrada: {entrada.get('termino','(sin título)')}\n"
+                f"Definición: {entrada.get('definicion','')}\n"
+                f"Técnico: {entrada.get('tecnico','')}\n"
+                f"Sentido biológico: {entrada.get('sentido_biologico','')}\n"
+                f"Conflicto: {entrada.get('conflicto','')}\n"
+                f"Referencias cruzadas: {', '.join(entrada.get('referencias_cruzadas', []))}\n"
+                "----"
+            )
+
+        return "\n\n".join(partes)
 
 class VectorDatabaseTool(BaseTool):
     name: str = "Vector Database Search"

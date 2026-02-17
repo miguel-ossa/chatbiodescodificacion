@@ -3,6 +3,7 @@ from crewai.project import CrewBase, agent, task, crew
 from crewai import LLM
 from dotenv import load_dotenv
 import os
+import re
 
 # Import the tools to make them available
 from .tools.tools import (
@@ -41,6 +42,18 @@ default_llm = "gpt-oss:120b-cloud"
 
 # usa un directorio seguro dentro del contenedor
 os.environ["CREWAI_STORAGE_PATH"] = "/tmp/.crewai"
+
+
+def strip_large_json_blocks(text: str, max_len: int = 8000) -> str:
+    # elimina bloques ```json``` demasiado largos
+    def repl(match):
+        block = match.group(0)
+        if len(block) > max_len:
+            return "```json\n{...bloque JSON omitido por ser demasiado largo...}\n```"
+        return block
+
+    return re.sub(r"```json[\s\S]*?```", repl, text)
+
 
 @CrewBase
 class Chatbiodescodificacion():
@@ -179,7 +192,8 @@ class Chatbiodescodificacion():
 
         # Execute the crew
         result = self.crew().kickoff(inputs=inputs)
-
+        raw = result.raw
+        cleaned = strip_large_json_blocks(raw)
         # Parse and return results
         try:
             # The result is a CrewResult object, we need to extract the final output
@@ -187,7 +201,7 @@ class Chatbiodescodificacion():
                 "query": query,
                 "session_history": session_history,
                 "results": result.raw,
-                "final_output": result.raw
+                "final_output": cleaned
             }
         except Exception as e:
             return {

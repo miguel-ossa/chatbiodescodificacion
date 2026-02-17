@@ -42,10 +42,11 @@ search_dictionary:
        relacionados con la consulta.
   agent: dictionary_navigator
   expected_output: |
-    Devuelve SIEMPRE un ÚNICO bloque de texto en español.
-    Incluye las entradas relevantes del diccionario en formato legible.
-    Si necesitas JSON, inclúyelo SOLO dentro de un bloque de texto
-    ```json ... ``` pero la respuesta principal debe ser TEXTO, no una lista JSON pura.
+    Devuelve SIEMPRE un ÚNICO bloque de texto en español, en formato explicativo.
+    - NO devuelvas listas ni objetos JSON puros.
+    - NO envuelvas toda la respuesta en un bloque ```json``` con la entrada completa.
+    Tu respuesta debe describir las entradas relevantes con texto legible en Markdown
+    (títulos, listas, párrafos) usando solo fragmentos breves de JSON si fuera imprescindible.
 
 generate_answer:
   description: |
@@ -64,6 +65,7 @@ generate_answer:
        - OÍDO INTERNO
     4. Para cada entrada relevante:
        - Primero muestra la entrada completa. Luego:
+       - NO muestres la entrada en formato JSON.    
        - Resume brevemente 'definicion'.
        - Explica en lenguaje sencillo 'tecnico'.
        - Explica el 'sentido_biologico'.

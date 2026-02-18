@@ -28,6 +28,24 @@ UI_TEXTS = {
         ],
         "lang_label": "Idioma de interfaz",
     },
+    "zh": {
+        "title": "# 🧬 生物解码聊天",
+        "subtitle": "📚 字典已加载：2096 条目",
+        "chat_label": "对话",
+        "input_label": "你的问题",
+        "input_placeholder": "例：消化问题与哪些冲突相关？",
+        "send": "发送",
+        "clear": "清空",
+        "examples_title": "### 💡 示例问题",
+        "examples": [
+            "什么是生物解码？",
+            "我4年来双手拇指关节疼痛（不得不放弃按摩师工作），一生手、脚和腋下多汗，天生腰椎侧弯严重，27岁时出现焦虑和惊恐发作",
+            "过敏的生物学意义",
+            "小腿胫骨湿疹或瘙痒，后来消失并转移到手背",
+            "髋部疼痛不规则地向上或向下转移到右臂和小指，或向下到膝盖和脚趾"
+        ],
+        "lang_label": "界面语言"
+    },
     "en": {
         "title": "# 🧬 Biodecoding Chat",
         "subtitle": "📚 Dictionary loaded: 2096 entries",
@@ -102,10 +120,12 @@ UI_TEXTS = {
     },
 }
 
+
 def get_texts(lang: str):
     if lang == "auto":
         return UI_TEXTS["es"]
     return UI_TEXTS.get(lang, UI_TEXTS["es"])
+
 
 def detectar_idioma(texto: str) -> str:
     try:
@@ -113,6 +133,7 @@ def detectar_idioma(texto: str) -> str:
     except Exception:
         lang = "es"
     return lang
+
 
 def ejemplos_markdown(examples: list[str]) -> str:
     # muestra solo las primeras palabras como hace Gradio
@@ -124,6 +145,7 @@ def ejemplos_markdown(examples: list[str]) -> str:
             short = e
         lines.append(f"- {short}")
     return "\n".join(lines)
+
 
 def chat_fn(message, history):
     """
@@ -164,12 +186,14 @@ def chat_fn(message, history):
     # Devolvemos: limpiar textbox + nuevo history
     return "", history
 
+
 def limpiar_fn():
     return []  # history vacío
 
+
 # 'query': 'Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico.'
 # 'query': 'dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho y dedo meñique o hacia la rodilla y dedos de los pies'
-#'query': 'eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano'
+# 'query': 'eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano'
 # 'query': 'tengo vértigo cuando subo a sitios altos'
 
 def crear_interfaz():
@@ -181,7 +205,7 @@ def crear_interfaz():
 
         idioma = gr.Dropdown(
             label="Idioma de interfaz",
-            choices=["auto", "es", "pt", "en", "fr", "de"],
+            choices=["auto", "es", "zh", "pt", "en", "fr", "de"],
             value="auto",
         )
 
@@ -212,31 +236,31 @@ def crear_interfaz():
         def actualizar_ui(lang):
             texts = get_texts(lang)
             return (
-                texts["title"],                       # title_md
-                texts["subtitle"],                    # subtitle_md
-                gr.Dropdown(                          # idioma
+                texts["title"],  # title_md
+                texts["subtitle"],  # subtitle_md
+                gr.Dropdown(  # idioma
                     label=texts["lang_label"],
-                    choices=["auto", "es", "pt", "en", "fr", "de"],
+                    choices=["auto", "es", "zh", "pt", "en", "fr", "de"],
                     value=lang,
                 ),
-                gr.Textbox(                           # mensaje
+                gr.Textbox(  # mensaje
                     label=texts["input_label"],
                     placeholder=texts["input_placeholder"],
                     scale=4,
                 ),
-                gr.Button(                            # boton_enviar
+                gr.Button(  # boton_enviar
                     value=texts["send"],
                     variant="primary",
                     scale=1,
                 ),
-                gr.Button(                            # boton_limpiar
+                gr.Button(  # boton_limpiar
                     value=texts["clear"],
                     variant="secondary",
                     scale=1,
                 ),
-                texts["examples_title"],              # examples_title
-                ejemplos_markdown(texts["examples"]), # examples_list (visible traducido)
-                lang,                                 # current_lang
+                texts["examples_title"],  # examples_title
+                ejemplos_markdown(texts["examples"]),  # examples_list (visible traducido)
+                lang,  # current_lang
             )
 
         idioma.change(
@@ -290,9 +314,11 @@ def crear_interfaz():
 
     return interfaz
 
+
 def run():
     demo = crear_interfaz()
     demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
+
 
 if __name__ == "__main__":
     demo = crear_interfaz()

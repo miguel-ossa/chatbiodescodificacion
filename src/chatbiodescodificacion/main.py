@@ -1,9 +1,19 @@
 #!/usr/bin/env python
 import warnings
-import os
+import unicodedata
 import gradio as gr
 from langdetect import detect
 from chatbiodescodificacion.crew import Chatbiodescodificacion
+
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_JUSTIFY
+from reportlab.lib import colors
+import re
+import os
+import tempfile
+
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -18,6 +28,8 @@ UI_TEXTS = {
         "input_placeholder": "Ej: ¿Qué conflictos están relacionados con problemas digestivos?",
         "send": "Enviar",
         "clear": "Limpiar",
+        "download": "Descargar respuesta en PDF",
+        "file_label": "PDF generado",
         "examples_title": "### 💡 Preguntas de ejemplo",
         "examples": [
             "¿Qué es la biodescodificación?",
@@ -36,6 +48,8 @@ UI_TEXTS = {
         "input_placeholder": "例：消化问题与哪些冲突相关？",
         "send": "发送",
         "clear": "清空",
+        "download": "下载回复 PDF",
+        "file_label": "生成的 PDF",
         "examples_title": "### 💡 示例问题",
         "examples": [
             "什么是生物解码？",
@@ -54,6 +68,8 @@ UI_TEXTS = {
         "input_placeholder": "E.g.: What conflicts are related to digestive problems?",
         "send": "Send",
         "clear": "Clear",
+        "download": "Download answer as PDF",
+        "file_label": "Generated PDF",
         "examples_title": "### 💡 Example questions",
         "examples": [
             "What is biodecoding?",
@@ -72,6 +88,8 @@ UI_TEXTS = {
         "input_placeholder": "Ex.: Que conflitos estão relacionados com problemas digestivos?",
         "send": "Enviar",
         "clear": "Limpar",
+        "download": "Baixar resposta em PDF",
+        "file_label": "PDF gerado",
         "examples_title": "### 💡 Perguntas de exemplo",
         "examples": [
             "O que é biodescodificação?",
@@ -90,6 +108,8 @@ UI_TEXTS = {
         "input_placeholder": "Ex. : Quels conflits sont liés aux problèmes digestifs ?",
         "send": "Envoyer",
         "clear": "Effacer",
+        "download": "Télécharger la réponse en PDF",
+        "file_label": "PDF généré",
         "examples_title": "### 💡 Questions d’exemple",
         "examples": [
             "Qu’est‑ce que la biodécodage ?",
@@ -108,6 +128,8 @@ UI_TEXTS = {
         "input_placeholder": "Z. B.: Welche Konflikte stehen mit Verdauungsproblemen in Zusammenhang?",
         "send": "Senden",
         "clear": "Löschen",
+        "download": "Antwort als PDF herunterladen",
+        "file_label": "Erstelltes PDF",
         "examples_title": "### 💡 Beispielfragen",
         "examples": [
             "Was ist Biodekodierung?",
@@ -119,6 +141,44 @@ UI_TEXTS = {
         "lang_label": "Interface-Sprache",
     },
 }
+
+def normalizar_simbolos(texto: str) -> str:
+    """
+    Limpia caracteres raros y los reemplaza por equivalentes simples.
+    """
+    reemplazos = {
+        "■": "-",          # cuadraditos → guion
+        "–": "-",          # guion en dash
+        "—": "-",          # em dash
+        "·": "-",          # punto medio
+        "…": "...",
+        "\u00a0": " ",     # NBSP
+        "\u2028": " ",     # line separator
+        "\u2029": " ",     # paragraph separator
+    }
+    for orig, dest in reemplazos.items():
+        texto = texto.replace(orig, dest)
+
+    # Opcional: colapsar múltiples guiones consecutivos a uno solo
+    texto = re.sub(r"-{2,}", "-", texto)
+
+    return texto
+
+def slugify(text: str) -> str:
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"[^\w\s-]", "", text).strip().lower()
+    return re.sub(r"[-\s]+", "_", text)
+
+def extraer_titulo_principal(texto: str) -> str | None:
+    match = re.search(
+        r"(?:#+\s*)?Entrada:\s*\*\*(.*?)\*\*",
+        texto,
+        re.IGNORECASE
+    )
+    if match:
+        return match.group(1).strip()
+    return None
 
 
 def get_texts(lang: str):
@@ -147,7 +207,7 @@ def ejemplos_markdown(examples: list[str]) -> str:
     return "\n".join(lines)
 
 
-def chat_fn(message, history):
+def chat_fn(message, history, last_answer):
     """
     history: lista de dicts {"role": "...", "content": "..."} (formato messages).
     """
@@ -183,13 +243,202 @@ def chat_fn(message, history):
         {"role": "assistant", "content": full},
     ]
 
-    # Devolvemos: limpiar textbox + nuevo history
-    return "", history
+    # actualizamos last_answer con la última respuesta
+    last_answer = full
 
+    descarga_activa = bool(full)
+    return (
+        "",
+        history,
+        last_answer,
+        descarga_activa,
+        gr.update(interactive=descarga_activa),
+    )
 
 def limpiar_fn():
-    return []  # history vacío
+    return (
+        [],                     # chat
+        "",                     # last_answer
+        False,                  # descarga_activa
+        gr.update(interactive=False),  # deshabilitar botón descarga
+        gr.update(visible=False),      # ocultar archivo
+    )
 
+# helpers simples
+def escape_html(texto: str) -> str:
+    texto = texto.replace("&", "&amp;")
+    texto = texto.replace("<", "&lt;")
+    texto = texto.replace(">", "&gt;")
+    return texto
+
+def procesar_negritas(texto: str) -> str:
+    # **texto** -> <b>texto</b>
+    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", texto)
+
+def procesar_tabla_markdown(lineas: list[str]) -> list[list[str]]:
+    filas = []
+    for linea in lineas:
+        linea = linea.strip()
+        if not linea:
+            continue
+        # ignorar separadora |---|---|
+        if re.match(r'^\|\s*:?-{3,}', linea):
+            continue
+        celdas = [c.strip() for c in linea.split("|")]
+        # quitar vacíos de los extremos por el | inicial/final
+        celdas = [c for c in celdas if c]
+        if celdas:
+            filas.append(celdas)
+    return filas
+
+def crear_tabla_pdf(data: list[list[str]]):
+    styles = getSampleStyleSheet()
+    normal = styles["Normal"]
+
+    # convertir celdas a Paragraph para que hagan wrapping
+    data_para = []
+    for fila in data:
+        data_para.append([
+            Paragraph(
+                procesar_negritas(escape_html(normalizar_simbolos(c))),
+                normal
+            )
+            for c in fila
+        ])
+
+    tabla = Table(data_para, repeatRows=1)
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4a90e2")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+
+        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
+         [colors.whitesmoke, colors.HexColor("#f5f5f5")]),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 1), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+    ]))
+    return tabla
+
+def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
+    if not texto_respuesta:
+        return None
+
+    titulo = extraer_titulo_principal(texto_respuesta)
+    if titulo:
+        filename = f"{slugify(titulo)}.pdf"
+    else:
+        filename = "respuesta_biodescodificacion.pdf"
+
+    path = os.path.join(tempfile.gettempdir(), filename)
+
+    doc = SimpleDocTemplate(
+        path,
+        pagesize=A4,
+        leftMargin=50,
+        rightMargin=50,
+        topMargin=50,
+        bottomMargin=50,
+    )
+
+    styles = getSampleStyleSheet()
+    body = ParagraphStyle(
+        "BodyJustify",
+        parent=styles["BodyText"],
+        alignment=TA_JUSTIFY,
+        fontSize=10,
+        leading=13,
+    )
+    h2 = styles["Heading2"]
+
+    elements = []
+
+    if titulo:
+        titulo_norm = normalizar_simbolos(titulo.upper())
+        elements.append(Paragraph(escape_html(titulo_norm), styles["Title"]))
+        elements.append(Spacer(1, 20))
+
+    lineas = texto_respuesta.split("\n")
+    i = 0
+    while i < len(lineas):
+        linea = lineas[i].strip()
+
+        # línea vacía -> espacio
+        if not linea:
+            elements.append(Spacer(1, 6))
+            i += 1
+            continue
+
+        # bloque de tabla markdown
+        if linea.startswith("|") and "|" in linea[1:]:
+            bloque_tabla = []
+            while i < len(lineas) and lineas[i].strip().startswith("|"):
+                bloque_tabla.append(lineas[i].rstrip())
+                i += 1
+            data = procesar_tabla_markdown(bloque_tabla)
+            if data:
+                tabla = crear_tabla_pdf(data)
+                elements.append(tabla)
+                elements.append(Spacer(1, 10))
+            continue
+
+        # títulos markdown
+        if linea.startswith("###"):
+            texto = normalizar_simbolos(linea.replace("###", "").strip())
+            elements.append(Paragraph(escape_html(texto), h2))
+            elements.append(Spacer(1, 6))
+            i += 1
+            continue
+        elif linea.startswith("##"):
+            texto = normalizar_simbolos(linea.replace("##", "").strip())
+            elements.append(Paragraph(escape_html(texto), h2))
+            elements.append(Spacer(1, 6))
+            i += 1
+            continue
+        elif linea.startswith("#"):
+            texto = normalizar_simbolos(linea.replace("#", "").strip())
+            elements.append(Paragraph(escape_html(texto), h2))
+            elements.append(Spacer(1, 6))
+            i += 1
+            continue
+
+        # listas simples con -
+        if linea.startswith("- "):
+            texto = normalizar_simbolos(linea[2:].strip())
+            p = f"• {procesar_negritas(escape_html(texto))}"
+            elements.append(Paragraph(p, body))
+            i += 1
+            continue
+
+        # separador --- -> algo de espacio
+        if re.match(r"^-{3,}$", linea):
+            elements.append(Spacer(1, 10))
+            i += 1
+            continue
+
+        # texto normal
+        texto_linea = normalizar_simbolos(linea)
+        texto = procesar_negritas(escape_html(texto_linea))
+        elements.append(Paragraph(texto, body))
+        i += 1
+
+    doc.build(elements)
+    return path
+
+def descargar_pdf_fn(last_answer: str):
+    if not last_answer:
+        return gr.File(visible=False)
+    pdf_path = generar_pdf_respuesta(last_answer)
+    return gr.File(value=pdf_path, visible=True)
 
 # 'query': 'Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico.'
 # 'query': 'dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho y dedo meñique o hacia la rodilla y dedos de los pies'
@@ -199,6 +448,8 @@ def limpiar_fn():
 def crear_interfaz():
     with gr.Blocks(title="Chat Biodescodificación") as interfaz:
         current_lang = gr.State("auto")
+        last_answer = gr.State("")
+        descarga_activa = gr.State(False)
 
         title_md = gr.Markdown()
         subtitle_md = gr.Markdown()
@@ -223,6 +474,14 @@ def crear_interfaz():
         with gr.Row():
             boton_enviar = gr.Button("Enviar", variant="primary", scale=1)
             boton_limpiar = gr.Button("Limpiar", variant="secondary", scale=1)
+
+        with gr.Row():
+            boton_descargar = gr.Button(
+                "Descargar respuesta en PDF",
+                variant="secondary",
+                interactive=False  # ← deshabilitado inicialmente
+            )
+            archivo_pdf = gr.File(label="PDF generado", visible=False)
 
         examples_title = gr.Markdown("### 💡 Preguntas de ejemplo")
         examples_list = gr.Markdown()  # lista traducida
@@ -261,6 +520,13 @@ def crear_interfaz():
                 texts["examples_title"],  # examples_title
                 ejemplos_markdown(texts["examples"]),  # examples_list (visible traducido)
                 lang,  # current_lang
+                gr.update(
+                    value=texts["download"]
+                ),
+                gr.File(  # archivo_pdf (solo cambia el label)
+                    label=texts["file_label"],
+                    visible=False,
+                ),
             )
 
         idioma.change(
@@ -276,6 +542,8 @@ def crear_interfaz():
                 examples_title,
                 examples_list,
                 current_lang,
+                boton_descargar,
+                archivo_pdf,
             ],
         )
 
@@ -292,24 +560,32 @@ def crear_interfaz():
                 examples_title,
                 examples_list,
                 current_lang,
+                boton_descargar,
+                archivo_pdf,
             ],
         )
 
         boton_enviar.click(
             fn=chat_fn,
-            inputs=[mensaje, chat],
-            outputs=[mensaje, chat],
+            inputs=[mensaje, chat, last_answer],
+            outputs=[mensaje, chat, last_answer, descarga_activa, boton_descargar],
         )
 
         mensaje.submit(
             fn=chat_fn,
-            inputs=[mensaje, chat],
-            outputs=[mensaje, chat],
+            inputs=[mensaje, chat, last_answer],
+            outputs=[mensaje, chat, last_answer, descarga_activa, boton_descargar],
         )
 
         boton_limpiar.click(
             fn=limpiar_fn,
-            outputs=chat,
+            outputs=[chat, last_answer, descarga_activa, boton_descargar, archivo_pdf],
+        )
+
+        boton_descargar.click(
+            fn=descargar_pdf_fn,
+            inputs=[last_answer],
+            outputs=[archivo_pdf],
         )
 
     return interfaz

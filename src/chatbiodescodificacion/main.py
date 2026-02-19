@@ -14,6 +14,10 @@ import re
 import os
 import tempfile
 
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -142,27 +146,178 @@ UI_TEXTS = {
     },
 }
 
-def normalizar_simbolos(texto: str) -> str:
+def registrar_fuente_unicode():
+    """Registra una fuente TrueType que soporte caracteres Unicode"""
+    try:
+        # Intentar registrar DejaVuSans (fuente libre con soporte Unicode completo)
+        # Primero verifica si existe en el sistema
+        fuentes_comunes = [
+            # Linux
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf",
+            # macOS
+            "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+            "/System/Library/Fonts/Helvetica.ttf",
+            "/Library/Fonts/Arial.ttf",
+            # Windows
+            "C:\\Windows\\Fonts\\arial.ttf",
+            "C:\\Windows\\Fonts\\segoeui.ttf",
+            "C:\\Windows\\Fonts\\arialuni.ttf",
+            "C:\\Windows\\Fonts\\times.ttf",
+        ]
+
+        fuente_registrada = False
+        for ruta_fuente in fuentes_comunes:
+            if os.path.exists(ruta_fuente):
+                try:
+                    pdfmetrics.registerFont(TTFont('UnicodeFont', ruta_fuente))
+                    fuente_registrada = True
+                    print(f"Fuente Unicode registrada: {ruta_fuente}")
+                    break
+                except:
+                    continue
+
+        if not fuente_registrada:
+            # Fallback: usar la fuente por defecto pero con registro de codificación
+            pdfmetrics.registerFont(pdfmetrics.Font('UnicodeFont', 'Helvetica', 'WinAnsiEncoding'))
+            print("Usando Helvetica como fallback")
+
+    except Exception as e:
+        print(f"Error registrando fuente Unicode: {e}")
+        pdfmetrics.registerFont(pdfmetrics.Font('UnicodeFont', 'Helvetica', 'WinAnsiEncoding'))
+
+# Registrar la fuente al inicio
+registrar_fuente_unicode()
+
+
+def debug_caracteres(texto: str, contexto: str = ""):
+    """Función de ayuda para debuggear caracteres problemáticos"""
+    if not texto:
+        return
+
+    print(f"\n--- DEBUG CARACTERES {contexto} ---")
+    for i, ch in enumerate(texto):
+        if ord(ch) > 127:  # Caracteres no ASCII
+            print(f"Pos {i}: '{ch}' (U+{ord(ch):04X}) - {unicodedata.name(ch, 'DESCONOCIDO')}")
+
+    # Buscar específicamente el selector de variación
+    if '\uFE0F' in texto:
+        print(f"¡ENCONTRADO SELECTOR DE VARIACIÓN U+FE0F en {contexto}!")
+        partes = texto.split('\uFE0F')
+        print(f"Texto dividido en {len(partes)} partes")
+
+def limpiar_caracteres_especiales(texto: str) -> str:
+    """Limpia caracteres especiales problemáticos como selectores de variación"""
+    if not texto:
+        return texto
+
+    # Eliminar selectores de variación (U+FE00 a U+FE0F) - EMOJIS
+    texto = re.sub(r'[\uFE00-\uFE0F]', '', texto)
+
+    # Eliminar otros caracteres de control problemáticos
+    texto = re.sub(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]', '', texto)
+
+    # Eliminar caracteres de formato Unicode
+    texto = re.sub(r'[\u2000-\u200F\u2028-\u202F\u205F-\u206F]', ' ', texto)
+
+    # Normalizar espacios
+    texto = re.sub(r' +', ' ', texto)
+
+    return texto
+
+def procesar_formato_markdown(texto: str) -> str:
     """
-    Limpia caracteres raros y los reemplaza por equivalentes simples.
+    Procesa formato markdown básico para ReportLab:
+    1. Escapa primero el contenido de texto
+    2. Luego aplica etiquetas HTML válidas para ReportLab
     """
+    if not texto:
+        return texto
+
+    # Paso 1: Escapar TODO el texto primero (protege <, >, & en contenido)
+    texto = escape_html(texto)
+
+    # Paso 2: Aplicar formato markdown → etiquetas HTML válidas
+    texto = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', texto)  # Negrita
+    texto = re.sub(r'\*(.+?)\*', r'<i>\1</i>', texto)      # Cursiva
+    texto = re.sub(r'__(.+?)__', r'<u>\1</u>', texto)      # Subrayado
+
+    return texto
+
+def normalizar_simbolos_global(texto: str) -> str:
+    if not texto:
+        return texto
+
+    # Primero, limpiar selectores de variación y caracteres especiales
+    texto = limpiar_caracteres_especiales(texto)
+
     reemplazos = {
-        "■": "-",          # cuadraditos → guion
-        "–": "-",          # guion en dash
-        "—": "-",          # em dash
-        "·": "-",          # punto medio
-        "…": "...",
-        "\u00a0": " ",     # NBSP
-        "\u2028": " ",     # line separator
-        "\u2029": " ",     # paragraph separator
+        "■": "-",  # U+25A0 - BLACK SQUARE
+        "▪": "-",  # U+25AA - BLACK SMALL SQUARE
+        "□": "-",  # U+25A1 - WHITE SQUARE
+        "▫": "-",  # U+25AB - WHITE SMALL SQUARE
+        "–": "-",  # U+2013 - EN DASH
+        "—": "-",  # U+2014 - EM DASH
+        "·": "-",  # U+00B7 - MIDDLE DOT
+        "•": "-",  # U+2022 - BULLET (por si acaso)
+        "…": "...",  # U+2026 - HORIZONTAL ELLIPSIS
+        "<br>•": "\n•",
+        "\u00a0": " ",  # NBSP
+        "\u2028": " ",  # LINE SEPARATOR
+        "\u2029": " ",  # PARAGRAPH SEPARATOR
+        "\u202f": " ",  # NARROW NO-BREAK SPACE
+        "\ufeff": "",  # ZERO WIDTH NO-BREAK SPACE (BOM)
     }
+
     for orig, dest in reemplazos.items():
         texto = texto.replace(orig, dest)
 
-    # Opcional: colapsar múltiples guiones consecutivos a uno solo
+    # Rango geométrico completo: cualquier símbolo de caja/cuadrado/bullet → guion
+    texto = re.sub(r"[\u25a0-\u25ff]", "-", texto)
+
+    # También reemplazar otros caracteres de bloque
+    texto = re.sub(r"[\u2580-\u259f]", "-", texto)  # Block Elements
+
+    # Caracteres de flecha (opcional)
+    texto = re.sub(r"[\u2190-\u21ff]", "-", texto)  # Arrows
+
+    # Casos específicos de tu dominio
+    texto = texto.replace("re-valoración", "revaloración")
+    texto = texto.replace("re-valoración", "revaloración")
+    texto = texto.replace("mano-trabajo", "mano/trabajo")
+
+    # Colapsar múltiples guiones
     texto = re.sub(r"-{2,}", "-", texto)
 
+    # Eliminar espacios múltiples
+    texto = re.sub(r" +", " ", texto)
+
     return texto
+
+# def normalizar_simbolos(texto: str) -> str:
+#     reemplazos = {
+#         "■": "-",      # U+25A0
+#         "▪": "-",      # U+25AA, por si acaso
+#         "–": "-",      # U+2013 en dash
+#         "—": "-",      # U+2014 em dash
+#         "·": "-",      # U+00B7
+#         "…": "...",    # U+2026
+#         "<br>•": "0x0d",
+#         "\u00a0": " ", # NBSP
+#         "\u2028": " ", # line separator
+#         "\u2029": " ", # paragraph separator
+#         "\u202f": " ", # narrow no‑break space
+#     }
+#     for orig, dest in reemplazos.items():
+#         texto = texto.replace(orig, dest)
+#
+#     # cualquier carácter geométrico tipo “box” → guion
+#     texto = re.sub(r"[\u25a0-\u25ff]", "-", texto)
+#
+#     # colapsar múltiples guiones consecutivos
+#     texto = re.sub(r"-{2,}", "-", texto)
+#     return texto
 
 def slugify(text: str) -> str:
     text = unicodedata.normalize("NFKD", text)
@@ -206,7 +361,6 @@ def ejemplos_markdown(examples: list[str]) -> str:
         lines.append(f"- {short}")
     return "\n".join(lines)
 
-
 def chat_fn(message, history, last_answer):
     """
     history: lista de dicts {"role": "...", "content": "..."} (formato messages).
@@ -236,6 +390,9 @@ def chat_fn(message, history, last_answer):
     )
 
     full = result.get("final_output") or result.get("results") or ""
+
+    # NORMALIZAR INMEDIATAMENTE DESPUÉS DE OBTENER EL RESULTADO
+    full = normalizar_simbolos_global(full)
 
     # Añadimos los dos mensajes al history
     history = history + [
@@ -271,10 +428,6 @@ def escape_html(texto: str) -> str:
     texto = texto.replace(">", "&gt;")
     return texto
 
-def procesar_negritas(texto: str) -> str:
-    # **texto** -> <b>texto</b>
-    return re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", texto)
-
 def procesar_tabla_markdown(lineas: list[str]) -> list[list[str]]:
     filas = []
     for linea in lineas:
@@ -287,24 +440,43 @@ def procesar_tabla_markdown(lineas: list[str]) -> list[list[str]]:
         celdas = [c.strip() for c in linea.split("|")]
         # quitar vacíos de los extremos por el | inicial/final
         celdas = [c for c in celdas if c]
-        if celdas:
-            filas.append(celdas)
+
+        # Limpiar cada celda de caracteres problemáticos
+        celdas_limpias = []
+        for celda in celdas:
+            # Primero limpiar caracteres especiales
+            celda = limpiar_caracteres_especiales(celda)
+            # Eliminar caracteres de control y otros problemáticos
+            celda = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', celda)
+            # Reemplazar cuadros negros específicamente
+            celda = celda.replace('■', '-')
+            celdas_limpias.append(celda)
+
+        if celdas_limpias:
+            filas.append(celdas_limpias)
     return filas
 
 def crear_tabla_pdf(data: list[list[str]]):
     styles = getSampleStyleSheet()
-    normal = styles["Normal"]
+    # Crear un estilo personalizado con la fuente Unicode
+    normal_unicode = ParagraphStyle(
+        'NormalUnicode',
+        parent=styles["Normal"],
+        fontName='UnicodeFont',  # Usar la fuente registrada
+        fontSize=8,
+    )
 
     # convertir celdas a Paragraph para que hagan wrapping
     data_para = []
     for fila in data:
-        data_para.append([
-            Paragraph(
-                procesar_negritas(escape_html(normalizar_simbolos(c))),
-                normal
-            )
-            for c in fila
-        ])
+        fila_normalizada = []
+        for c in fila:
+            # APLICAR NORMALIZACIÓN TAMBIÉN AQUÍ
+            c_normalizado = normalizar_simbolos_global(c)
+            # ✅ Solo procesar_formato_markdown (ya incluye escape interno)
+            c_con_formato = procesar_formato_markdown(c_normalizado)
+            fila_normalizada.append(Paragraph(c_con_formato, normal_unicode))
+        data_para.append(fila_normalizada)
 
     tabla = Table(data_para, repeatRows=1)
     tabla.setStyle(TableStyle([
@@ -314,7 +486,6 @@ def crear_tabla_pdf(data: list[list[str]]):
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, 0), 9),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-
         ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1),
          [colors.whitesmoke, colors.HexColor("#f5f5f5")]),
@@ -329,9 +500,23 @@ def crear_tabla_pdf(data: list[list[str]]):
     ]))
     return tabla
 
+
 def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
     if not texto_respuesta:
         return None
+
+    print("CONTIENTE U+25A0:", "\u25a0" in texto_respuesta)
+    print("COUNT U+25A0:", texto_respuesta.count("\u25a0"))
+
+    # DEBUG: listar caracteres raros
+    raros = {ch for ch in texto_respuesta if not ch.isalnum() and ch not in " .,;:-_()[]{}¡!¿?\"'*/\n\t"}
+    print("CARACTERES RAROS:", [(repr(ch), hex(ord(ch))) for ch in sorted(raros)])
+
+    debug_caracteres(texto_respuesta, "ANTES DE NORMALIZAR")
+    # Normalización global agresiva - APLICAR SOLO UNA VEZ AL PRINCIPIO
+    texto_respuesta = normalizar_simbolos_global(texto_respuesta)
+
+    debug_caracteres(texto_respuesta, "DESPUÉS DE NORMALIZAR")
 
     titulo = extraer_titulo_principal(texto_respuesta)
     if titulo:
@@ -351,20 +536,35 @@ def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
     )
 
     styles = getSampleStyleSheet()
+
+    # Modificar todos los estilos para usar la fuente Unicode
     body = ParagraphStyle(
         "BodyJustify",
         parent=styles["BodyText"],
         alignment=TA_JUSTIFY,
         fontSize=10,
         leading=13,
+        fontName='UnicodeFont',  # Usar fuente Unicode
     )
-    h2 = styles["Heading2"]
+
+    h2 = ParagraphStyle(
+        "Heading2Unicode",
+        parent=styles["Heading2"],
+        fontName='UnicodeFont',  # Usar fuente Unicode
+    )
+
+    title_style = ParagraphStyle(
+        "TitleUnicode",
+        parent=styles["Title"],
+        fontName='UnicodeFont',  # Usar fuente Unicode
+    )
 
     elements = []
 
     if titulo:
-        titulo_norm = normalizar_simbolos(titulo.upper())
-        elements.append(Paragraph(escape_html(titulo_norm), styles["Title"]))
+        titulo_norm = titulo.upper()
+        titulo_listo = procesar_formato_markdown(titulo_norm)
+        elements.append(Paragraph(titulo_listo, title_style))
         elements.append(Spacer(1, 20))
 
     lineas = texto_respuesta.split("\n")
@@ -372,13 +572,11 @@ def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
     while i < len(lineas):
         linea = lineas[i].strip()
 
-        # línea vacía -> espacio
         if not linea:
             elements.append(Spacer(1, 6))
             i += 1
             continue
 
-        # bloque de tabla markdown
         if linea.startswith("|") and "|" in linea[1:]:
             bloque_tabla = []
             while i < len(lineas) and lineas[i].strip().startswith("|"):
@@ -391,44 +589,30 @@ def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
                 elements.append(Spacer(1, 10))
             continue
 
-        # títulos markdown
-        if linea.startswith("###"):
-            texto = normalizar_simbolos(linea.replace("###", "").strip())
-            elements.append(Paragraph(escape_html(texto), h2))
-            elements.append(Spacer(1, 6))
-            i += 1
-            continue
-        elif linea.startswith("##"):
-            texto = normalizar_simbolos(linea.replace("##", "").strip())
-            elements.append(Paragraph(escape_html(texto), h2))
-            elements.append(Spacer(1, 6))
-            i += 1
-            continue
-        elif linea.startswith("#"):
-            texto = normalizar_simbolos(linea.replace("#", "").strip())
-            elements.append(Paragraph(escape_html(texto), h2))
+        if linea.startswith("###") or linea.startswith("##") or linea.startswith("#"):
+            texto = re.sub(r"^#+\s*", "", linea)
+            texto_listo = procesar_formato_markdown(texto)  # Ya incluye escape + formato
+            elements.append(Paragraph(texto_listo, h2))
             elements.append(Spacer(1, 6))
             i += 1
             continue
 
-        # listas simples con -
         if linea.startswith("- "):
-            texto = normalizar_simbolos(linea[2:].strip())
-            p = f"• {procesar_negritas(escape_html(texto))}"
+            texto = linea[2:].strip()
+            texto_listo = procesar_formato_markdown(texto)  # Ya incluye escape + formato
+            p = f"• {texto_listo}"
             elements.append(Paragraph(p, body))
             i += 1
             continue
 
-        # separador --- -> algo de espacio
         if re.match(r"^-{3,}$", linea):
             elements.append(Spacer(1, 10))
             i += 1
             continue
 
-        # texto normal
-        texto_linea = normalizar_simbolos(linea)
-        texto = procesar_negritas(escape_html(texto_linea))
-        elements.append(Paragraph(texto, body))
+        # procesar_formato_markdown ya incluye escape + formato
+        texto_listo = procesar_formato_markdown(linea)
+        elements.append(Paragraph(texto_listo, body))
         i += 1
 
     doc.build(elements)
@@ -594,7 +778,6 @@ def crear_interfaz():
 def run():
     demo = crear_interfaz()
     demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
-
 
 if __name__ == "__main__":
     demo = crear_interfaz()

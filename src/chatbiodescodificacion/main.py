@@ -226,7 +226,7 @@ def limpiar_caracteres_especiales(texto: str) -> str:
 
     return texto
 
-def procesar_formato_markdown(texto: str) -> str:
+def aplicar_formato_markdown(texto: str) -> str:
     """
     Procesa formato markdown básico para ReportLab:
     1. Escapa primero el contenido de texto
@@ -263,6 +263,7 @@ def normalizar_simbolos_global(texto: str) -> str:
         "•": "-",  # U+2022 - BULLET (por si acaso)
         "…": "...",  # U+2026 - HORIZONTAL ELLIPSIS
         "<br>•": "\n•",
+        "<br>": "\n",
         "\u00a0": " ",  # NBSP
         "\u2028": " ",  # LINE SEPARATOR
         "\u2029": " ",  # PARAGRAPH SEPARATOR
@@ -282,11 +283,6 @@ def normalizar_simbolos_global(texto: str) -> str:
     # Caracteres de flecha (opcional)
     texto = re.sub(r"[\u2190-\u21ff]", "-", texto)  # Arrows
 
-    # Casos específicos de tu dominio
-    texto = texto.replace("re-valoración", "revaloración")
-    texto = texto.replace("re-valoración", "revaloración")
-    texto = texto.replace("mano-trabajo", "mano/trabajo")
-
     # Colapsar múltiples guiones
     texto = re.sub(r"-{2,}", "-", texto)
 
@@ -294,30 +290,6 @@ def normalizar_simbolos_global(texto: str) -> str:
     texto = re.sub(r" +", " ", texto)
 
     return texto
-
-# def normalizar_simbolos(texto: str) -> str:
-#     reemplazos = {
-#         "■": "-",      # U+25A0
-#         "▪": "-",      # U+25AA, por si acaso
-#         "–": "-",      # U+2013 en dash
-#         "—": "-",      # U+2014 em dash
-#         "·": "-",      # U+00B7
-#         "…": "...",    # U+2026
-#         "<br>•": "0x0d",
-#         "\u00a0": " ", # NBSP
-#         "\u2028": " ", # line separator
-#         "\u2029": " ", # paragraph separator
-#         "\u202f": " ", # narrow no‑break space
-#     }
-#     for orig, dest in reemplazos.items():
-#         texto = texto.replace(orig, dest)
-#
-#     # cualquier carácter geométrico tipo “box” → guion
-#     texto = re.sub(r"[\u25a0-\u25ff]", "-", texto)
-#
-#     # colapsar múltiples guiones consecutivos
-#     texto = re.sub(r"-{2,}", "-", texto)
-#     return texto
 
 def slugify(text: str) -> str:
     text = unicodedata.normalize("NFKD", text)
@@ -430,30 +402,38 @@ def escape_html(texto: str) -> str:
 
 def procesar_tabla_markdown(lineas: list[str]) -> list[list[str]]:
     filas = []
-    for linea in lineas:
+    for idx, linea in enumerate(lineas):
+        # línea original de debug, si quieres
+        # print(f"LINEA TABLA {idx}: {repr(linea)}")
+
         linea = linea.strip()
         if not linea:
             continue
-        # ignorar separadora |---|---|
-        if re.match(r'^\|\s*:?-{3,}', linea):
+
+        # Ignorar líneas separadoras de tabla markdown,
+        # como '|-|-|-|' o '|---|---|', etc.
+        if (
+            linea.startswith("|")
+            and linea.endswith("|")
+            and set(linea[1:-1].replace("|", "")) <= {"-", ":"}
+        ):
+            # solo guiones/dos puntos entre pipes -> es separador
+            # print(f"  -> IGNORADA (separador): {repr(linea)}")
             continue
+
         celdas = [c.strip() for c in linea.split("|")]
-        # quitar vacíos de los extremos por el | inicial/final
         celdas = [c for c in celdas if c]
 
-        # Limpiar cada celda de caracteres problemáticos
         celdas_limpias = []
         for celda in celdas:
-            # Primero limpiar caracteres especiales
             celda = limpiar_caracteres_especiales(celda)
-            # Eliminar caracteres de control y otros problemáticos
             celda = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', celda)
-            # Reemplazar cuadros negros específicamente
             celda = celda.replace('■', '-')
             celdas_limpias.append(celda)
 
         if celdas_limpias:
             filas.append(celdas_limpias)
+
     return filas
 
 def crear_tabla_pdf(data: list[list[str]]):
@@ -473,8 +453,8 @@ def crear_tabla_pdf(data: list[list[str]]):
         for c in fila:
             # APLICAR NORMALIZACIÓN TAMBIÉN AQUÍ
             c_normalizado = normalizar_simbolos_global(c)
-            # ✅ Solo procesar_formato_markdown (ya incluye escape interno)
-            c_con_formato = procesar_formato_markdown(c_normalizado)
+            # ✅ Solo aplicar_formato_markdown (ya incluye escape interno)
+            c_con_formato = aplicar_formato_markdown(c_normalizado)
             fila_normalizada.append(Paragraph(c_con_formato, normal_unicode))
         data_para.append(fila_normalizada)
 
@@ -559,11 +539,23 @@ def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
         fontName='UnicodeFont',  # Usar fuente Unicode
     )
 
+    quote_style = ParagraphStyle(
+        "QuoteUnicode",
+        parent=styles["BodyText"],
+        fontName='UnicodeFont',
+        fontSize=9,
+        leading=12,
+        leftIndent=15,     # sangrado
+        rightIndent=10,
+        textColor=colors.HexColor("#555555"),
+        italic=True,
+    )
+
     elements = []
 
     if titulo:
         titulo_norm = titulo.upper()
-        titulo_listo = procesar_formato_markdown(titulo_norm)
+        titulo_listo = aplicar_formato_markdown(titulo_norm)
         elements.append(Paragraph(titulo_listo, title_style))
         elements.append(Spacer(1, 20))
 
@@ -590,16 +582,16 @@ def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
             continue
 
         if linea.startswith("###") or linea.startswith("##") or linea.startswith("#"):
-            texto = re.sub(r"^#+\s*", "", linea)
-            texto_listo = procesar_formato_markdown(texto)  # Ya incluye escape + formato
-            elements.append(Paragraph(texto_listo, h2))
+            texto = re.sub(r"^#+\s*", "", linea)    # Primero remueve los #s
+            texto_listo = aplicar_formato_markdown(texto)       # Procesa SOLO el texto
+            elements.append(Paragraph(texto_listo, h2))         # Usa estilo correcto para títulos
             elements.append(Spacer(1, 6))
             i += 1
             continue
 
         if linea.startswith("- "):
             texto = linea[2:].strip()
-            texto_listo = procesar_formato_markdown(texto)  # Ya incluye escape + formato
+            texto_listo = aplicar_formato_markdown(texto)  # Ya incluye escape + formato
             p = f"• {texto_listo}"
             elements.append(Paragraph(p, body))
             i += 1
@@ -610,8 +602,28 @@ def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
             i += 1
             continue
 
-        # procesar_formato_markdown ya incluye escape + formato
-        texto_listo = procesar_formato_markdown(linea)
+        # Citas markdown: líneas que empiezan por ">"
+        if linea.startswith(">"):
+            # Eliminar el símbolo de cita y espacios
+            texto_cita = linea.lstrip(">").strip()
+            # Si hay líneas siguientes que también empiezan por ">", las unimos en un solo párrafo
+            j = i + 1
+            fragmentos = [texto_cita]
+            while j < len(lineas) and lineas[j].strip().startswith(">"):
+                frag = lineas[j].strip().lstrip(">").strip()
+                fragmentos.append(frag)
+                j += 1
+            texto_cita_unido = " ".join(fragmentos)
+
+            # Aplicar formato markdown (negritas, cursivas) sobre el texto de la cita
+            texto_cita_fmt = aplicar_formato_markdown(texto_cita_unido)
+            elements.append(Paragraph(texto_cita_fmt, quote_style))
+            elements.append(Spacer(1, 6))
+            i = j
+            continue
+
+        # aplicar_formato_markdown ya incluye escape + formato
+        texto_listo = aplicar_formato_markdown(linea)
         elements.append(Paragraph(texto_listo, body))
         i += 1
 

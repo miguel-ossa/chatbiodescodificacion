@@ -35,8 +35,8 @@ else
   echo
 fi
 
-# Build limpio + up
-docker compose build --no-cache
+# Build usando cache de capas
+docker compose build
 docker compose up
 
 echo "ChatBiodescodificacion corriendo en http://192.168.1.90:7860"

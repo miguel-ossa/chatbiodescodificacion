@@ -6,12 +6,24 @@ ENV GRADIO_SERVER_PORT=7860
 
 WORKDIR /app
 
+# 1) SO + pandoc + LaTeX (capa estable)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        pandoc \
+        texlive-latex-recommended \
+        texlive-latex-extra \
+        texlive-fonts-recommended \
+        texlive-fonts-extra \
+        texlive-xetex \
+        lmodern && \
+    rm -rf /var/lib/apt/lists/*
+
+# 2) Python deps (capa estable mientras no cambie requirements)
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copiar el contenido de src dentro de /app
+# 3) Código (capa volátil: se reconstruye rápido)
 COPY src/ .
 
 EXPOSE 7860
-
 CMD ["python", "-m", "chatbiodescodificacion.main"]

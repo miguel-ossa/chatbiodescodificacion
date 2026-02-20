@@ -17,7 +17,7 @@ import tempfile
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
+import subprocess
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -208,12 +208,18 @@ def debug_caracteres(texto: str, contexto: str = ""):
         print(f"Texto dividido en {len(partes)} partes")
 
 def limpiar_caracteres_especiales(texto: str) -> str:
-    """Limpia caracteres especiales problemáticos como selectores de variación"""
     if not texto:
         return texto
 
-    # Eliminar selectores de variación (U+FE00 a U+FE0F) - EMOJIS
+    # Eliminar selectores de variación (U+FE00 a U+FE0F)
     texto = re.sub(r'[\uFE00-\uFE0F]', '', texto)
+
+    # Eliminar combinador keycap U+20E3 (el de las teclas 1️⃣, 2️⃣, etc.)
+    texto = texto.replace('\u20E3', '')
+
+    # Eliminar emojis básicos (bloques más comunes)
+    texto = re.sub(r'[\U0001F300-\U0001FAFF]', '', texto)  # símbolos/emojis
+    texto = re.sub(r'[\U00002700-\U000027BF]', '', texto)  # dingbats
 
     # Eliminar otros caracteres de control problemáticos
     texto = re.sub(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]', '', texto)
@@ -480,8 +486,39 @@ def crear_tabla_pdf(data: list[list[str]]):
     ]))
     return tabla
 
+def generar_pdf_con_pandoc(texto_markdown: str) -> str:
+    # Normalizar solo lo mínimo necesario
+    texto_markdown = normalizar_simbolos_global(texto_markdown)
+
+    # Escribir markdown a archivo temporal
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as f:
+        f.write(texto_markdown)
+        md_path = f.name
+
+    # Generar PDF con pandoc
+    pdf_path = md_path.replace('.md', '.pdf')
+    subprocess.run([
+        'pandoc',
+        md_path,
+        '-o', pdf_path,
+        '--pdf-engine=xelatex',  # o wkhtmltopdf, weasyprint
+        '-V', 'mainfont=DejaVu Sans',  # fuente Unicode
+        '-V', 'geometry:margin=2cm',
+        '--highlight-style=tango'
+    ], check=True)
+
+    return pdf_path
 
 def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
+    try:
+        # Intentar con pandoc primero
+        return generar_pdf_con_pandoc(texto_respuesta)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback a tu implementación actual
+        print("DEBUG: ***** ERROR al generar PDF con pandoc")
+        return generar_pdf_con_reportlab(texto_respuesta)
+
+def generar_pdf_con_reportlab(texto_respuesta: str) -> str | None:
     if not texto_respuesta:
         return None
 

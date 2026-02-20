@@ -25,6 +25,8 @@ El Chat de Biodescodificación es una herramienta interactiva que permite consul
 - **Ejemplos predefinidos**: Incluye ejemplos para guiar la consulta
 - **Historial de conversación**: Mantiene el contexto de la conversación
 - **Limpieza de historial**: Opción para comenzar una nueva conversación
+- **Cambio de idioma**: Interfaz completamente traducida al español (es), chino (zh), portugués (pt), inglés (en), francés (fr) y alemán (de)
+- **Consulta en cualquier idioma**: Puedes hacer consultas en cualquier otro idioma
 
 ## Ejemplos de Consultas
 - "Desde hace 4 años tengo dolor en la articulación del dedo pulgar de las dos manos..."
@@ -44,5 +46,6 @@ El Chat de Biodescodificación es una herramienta interactiva que permite consul
 3. Entender las conexiones entre síntomas y conflictos emocionales
 4. Obtener explicaciones detalladas basadas en una base de conocimiento extensa
 5. Usar ejemplos para guiar tus consultas
+6. Descargar un archivo PDF con el resultado de tu consulta
 
 Esta aplicación es ideal para personas interesadas en el método de biodescodificación, terapeutas, profesionales de la salud y cualquier persona que desee comprender mejor el significado biológico de sus síntomas.

@@ -109,7 +109,7 @@ generate_answer:
 markdown_validate:
   description: |
     Revisa y limpia el texto final en Markdown, asegurando que
-    no tenga caracteres extraños ni bloques JSON.
+    no tenga caracteres extraños ni bloques JSON,  sin viñetas huérfanas.
   agent: markdown_validator
   expected_output: |
     Versión corregida del texto final, todavía en Markdown.

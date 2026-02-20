@@ -5,11 +5,6 @@ import gradio as gr
 from langdetect import detect
 from chatbiodescodificacion.crew import Chatbiodescodificacion
 
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_JUSTIFY
-from reportlab.lib import colors
 import re
 import os
 import tempfile
@@ -190,23 +185,6 @@ def registrar_fuente_unicode():
 # Registrar la fuente al inicio
 registrar_fuente_unicode()
 
-
-def debug_caracteres(texto: str, contexto: str = ""):
-    """Función de ayuda para debuggear caracteres problemáticos"""
-    if not texto:
-        return
-
-    print(f"\n--- DEBUG CARACTERES {contexto} ---")
-    for i, ch in enumerate(texto):
-        if ord(ch) > 127:  # Caracteres no ASCII
-            print(f"Pos {i}: '{ch}' (U+{ord(ch):04X}) - {unicodedata.name(ch, 'DESCONOCIDO')}")
-
-    # Buscar específicamente el selector de variación
-    if '\uFE0F' in texto:
-        print(f"¡ENCONTRADO SELECTOR DE VARIACIÓN U+FE0F en {contexto}!")
-        partes = texto.split('\uFE0F')
-        print(f"Texto dividido en {len(partes)} partes")
-
 def limpiar_caracteres_especiales(texto: str) -> str:
     if not texto:
         return texto
@@ -229,25 +207,6 @@ def limpiar_caracteres_especiales(texto: str) -> str:
 
     # Normalizar espacios
     texto = re.sub(r' +', ' ', texto)
-
-    return texto
-
-def aplicar_formato_markdown(texto: str) -> str:
-    """
-    Procesa formato markdown básico para ReportLab:
-    1. Escapa primero el contenido de texto
-    2. Luego aplica etiquetas HTML válidas para ReportLab
-    """
-    if not texto:
-        return texto
-
-    # Paso 1: Escapar TODO el texto primero (protege <, >, & en contenido)
-    texto = escape_html(texto)
-
-    # Paso 2: Aplicar formato markdown → etiquetas HTML válidas
-    texto = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', texto)  # Negrita
-    texto = re.sub(r'\*(.+?)\*', r'<i>\1</i>', texto)      # Cursiva
-    texto = re.sub(r'__(.+?)__', r'<u>\1</u>', texto)      # Subrayado
 
     return texto
 
@@ -312,7 +271,6 @@ def extraer_titulo_principal(texto: str) -> str | None:
     if match:
         return match.group(1).strip()
     return None
-
 
 def get_texts(lang: str):
     if lang == "auto":
@@ -406,277 +364,48 @@ def escape_html(texto: str) -> str:
     texto = texto.replace(">", "&gt;")
     return texto
 
-def procesar_tabla_markdown(lineas: list[str]) -> list[list[str]]:
-    filas = []
-    for idx, linea in enumerate(lineas):
-        # línea original de debug, si quieres
-        # print(f"LINEA TABLA {idx}: {repr(linea)}")
-
-        linea = linea.strip()
-        if not linea:
-            continue
-
-        # Ignorar líneas separadoras de tabla markdown,
-        # como '|-|-|-|' o '|---|---|', etc.
-        if (
-            linea.startswith("|")
-            and linea.endswith("|")
-            and set(linea[1:-1].replace("|", "")) <= {"-", ":"}
-        ):
-            # solo guiones/dos puntos entre pipes -> es separador
-            # print(f"  -> IGNORADA (separador): {repr(linea)}")
-            continue
-
-        celdas = [c.strip() for c in linea.split("|")]
-        celdas = [c for c in celdas if c]
-
-        celdas_limpias = []
-        for celda in celdas:
-            celda = limpiar_caracteres_especiales(celda)
-            celda = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', celda)
-            celda = celda.replace('■', '-')
-            celdas_limpias.append(celda)
-
-        if celdas_limpias:
-            filas.append(celdas_limpias)
-
-    return filas
-
-def crear_tabla_pdf(data: list[list[str]]):
-    styles = getSampleStyleSheet()
-    # Crear un estilo personalizado con la fuente Unicode
-    normal_unicode = ParagraphStyle(
-        'NormalUnicode',
-        parent=styles["Normal"],
-        fontName='UnicodeFont',  # Usar la fuente registrada
-        fontSize=8,
-    )
-
-    # convertir celdas a Paragraph para que hagan wrapping
-    data_para = []
-    for fila in data:
-        fila_normalizada = []
-        for c in fila:
-            # APLICAR NORMALIZACIÓN TAMBIÉN AQUÍ
-            c_normalizado = normalizar_simbolos_global(c)
-            # ✅ Solo aplicar_formato_markdown (ya incluye escape interno)
-            c_con_formato = aplicar_formato_markdown(c_normalizado)
-            fila_normalizada.append(Paragraph(c_con_formato, normal_unicode))
-        data_para.append(fila_normalizada)
-
-    tabla = Table(data_para, repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4a90e2")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 9),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-         [colors.whitesmoke, colors.HexColor("#f5f5f5")]),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE", (0, 1), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-    ]))
-    return tabla
-
 def generar_pdf_con_pandoc(texto_markdown: str) -> str:
-    # Normalizar solo lo mínimo necesario
+    # Normalizar solo lo mínimo necesario para el PDF
     texto_markdown = normalizar_simbolos_global(texto_markdown)
 
-    # Escribir markdown a archivo temporal
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as f:
-        f.write(texto_markdown)
-        md_path = f.name
-
-    # Generar PDF con pandoc
-    pdf_path = md_path.replace('.md', '.pdf')
-    subprocess.run([
-        'pandoc',
-        md_path,
-        '-o', pdf_path,
-        '--pdf-engine=xelatex',  # o wkhtmltopdf, weasyprint
-        '-V', 'mainfont=DejaVu Sans',  # fuente Unicode
-        '-V', 'geometry:margin=2cm',
-        '--highlight-style=tango'
-    ], check=True)
-
-    return pdf_path
-
-def generar_pdf_respuesta(texto_respuesta: str) -> str | None:
-    try:
-        # Intentar con pandoc primero
-        return generar_pdf_con_pandoc(texto_respuesta)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback a tu implementación actual
-        print("DEBUG: ***** ERROR al generar PDF con pandoc")
-        return generar_pdf_con_reportlab(texto_respuesta)
-
-def generar_pdf_con_reportlab(texto_respuesta: str) -> str | None:
-    if not texto_respuesta:
-        return None
-
-    print("CONTIENTE U+25A0:", "\u25a0" in texto_respuesta)
-    print("COUNT U+25A0:", texto_respuesta.count("\u25a0"))
-
-    # DEBUG: listar caracteres raros
-    raros = {ch for ch in texto_respuesta if not ch.isalnum() and ch not in " .,;:-_()[]{}¡!¿?\"'*/\n\t"}
-    print("CARACTERES RAROS:", [(repr(ch), hex(ord(ch))) for ch in sorted(raros)])
-
-    debug_caracteres(texto_respuesta, "ANTES DE NORMALIZAR")
-    # Normalización global agresiva - APLICAR SOLO UNA VEZ AL PRINCIPIO
-    texto_respuesta = normalizar_simbolos_global(texto_respuesta)
-
-    debug_caracteres(texto_respuesta, "DESPUÉS DE NORMALIZAR")
-
-    titulo = extraer_titulo_principal(texto_respuesta)
+    # Intentar extraer título principal
+    titulo = extraer_titulo_principal(texto_markdown)
     if titulo:
+        # slug para el nombre de archivo
         filename = f"{slugify(titulo)}.pdf"
     else:
         filename = "respuesta_biodescodificacion.pdf"
 
-    path = os.path.join(tempfile.gettempdir(), filename)
+    # Markdown temporal
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as f:
+        f.write(texto_markdown)
+        md_path = f.name
 
-    doc = SimpleDocTemplate(
-        path,
-        pagesize=A4,
-        leftMargin=50,
-        rightMargin=50,
-        topMargin=50,
-        bottomMargin=50,
-    )
+    # Ruta final del PDF (en el mismo tmpdir)
+    pdf_path = os.path.join(tempfile.gettempdir(), filename)
 
-    styles = getSampleStyleSheet()
-
-    # Modificar todos los estilos para usar la fuente Unicode
-    body = ParagraphStyle(
-        "BodyJustify",
-        parent=styles["BodyText"],
-        alignment=TA_JUSTIFY,
-        fontSize=10,
-        leading=13,
-        fontName='UnicodeFont',  # Usar fuente Unicode
-    )
-
-    h2 = ParagraphStyle(
-        "Heading2Unicode",
-        parent=styles["Heading2"],
-        fontName='UnicodeFont',  # Usar fuente Unicode
-    )
-
-    title_style = ParagraphStyle(
-        "TitleUnicode",
-        parent=styles["Title"],
-        fontName='UnicodeFont',  # Usar fuente Unicode
-    )
-
-    quote_style = ParagraphStyle(
-        "QuoteUnicode",
-        parent=styles["BodyText"],
-        fontName='UnicodeFont',
-        fontSize=9,
-        leading=12,
-        leftIndent=15,     # sangrado
-        rightIndent=10,
-        textColor=colors.HexColor("#555555"),
-        italic=True,
-    )
-
-    elements = []
-
+    # Opcional: pasar el título también a pandoc/LaTeX
+    pandoc_cmd = [
+        "pandoc",
+        md_path,
+        "-o", pdf_path,
+        "--pdf-engine=xelatex",
+        "-V", "mainfont=DejaVu Sans",
+        "-V", "geometry:margin=2cm",
+        "--highlight-style=tango",
+    ]
     if titulo:
-        titulo_norm = titulo.upper()
-        titulo_listo = aplicar_formato_markdown(titulo_norm)
-        elements.append(Paragraph(titulo_listo, title_style))
-        elements.append(Spacer(1, 20))
+        pandoc_cmd.extend(["-V", f"title={titulo}"])
 
-    lineas = texto_respuesta.split("\n")
-    i = 0
-    while i < len(lineas):
-        linea = lineas[i].strip()
+    subprocess.run(pandoc_cmd, check=True)
 
-        if not linea:
-            elements.append(Spacer(1, 6))
-            i += 1
-            continue
-
-        if linea.startswith("|") and "|" in linea[1:]:
-            bloque_tabla = []
-            while i < len(lineas) and lineas[i].strip().startswith("|"):
-                bloque_tabla.append(lineas[i].rstrip())
-                i += 1
-            data = procesar_tabla_markdown(bloque_tabla)
-            if data:
-                tabla = crear_tabla_pdf(data)
-                elements.append(tabla)
-                elements.append(Spacer(1, 10))
-            continue
-
-        if linea.startswith("###") or linea.startswith("##") or linea.startswith("#"):
-            texto = re.sub(r"^#+\s*", "", linea)    # Primero remueve los #s
-            texto_listo = aplicar_formato_markdown(texto)       # Procesa SOLO el texto
-            elements.append(Paragraph(texto_listo, h2))         # Usa estilo correcto para títulos
-            elements.append(Spacer(1, 6))
-            i += 1
-            continue
-
-        if linea.startswith("- "):
-            texto = linea[2:].strip()
-            texto_listo = aplicar_formato_markdown(texto)  # Ya incluye escape + formato
-            p = f"• {texto_listo}"
-            elements.append(Paragraph(p, body))
-            i += 1
-            continue
-
-        if re.match(r"^-{3,}$", linea):
-            elements.append(Spacer(1, 10))
-            i += 1
-            continue
-
-        # Citas markdown: líneas que empiezan por ">"
-        if linea.startswith(">"):
-            # Eliminar el símbolo de cita y espacios
-            texto_cita = linea.lstrip(">").strip()
-            # Si hay líneas siguientes que también empiezan por ">", las unimos en un solo párrafo
-            j = i + 1
-            fragmentos = [texto_cita]
-            while j < len(lineas) and lineas[j].strip().startswith(">"):
-                frag = lineas[j].strip().lstrip(">").strip()
-                fragmentos.append(frag)
-                j += 1
-            texto_cita_unido = " ".join(fragmentos)
-
-            # Aplicar formato markdown (negritas, cursivas) sobre el texto de la cita
-            texto_cita_fmt = aplicar_formato_markdown(texto_cita_unido)
-            elements.append(Paragraph(texto_cita_fmt, quote_style))
-            elements.append(Spacer(1, 6))
-            i = j
-            continue
-
-        # aplicar_formato_markdown ya incluye escape + formato
-        texto_listo = aplicar_formato_markdown(linea)
-        elements.append(Paragraph(texto_listo, body))
-        i += 1
-
-    doc.build(elements)
-    return path
+    return pdf_path
 
 def descargar_pdf_fn(last_answer: str):
     if not last_answer:
         return gr.File(visible=False)
-    pdf_path = generar_pdf_respuesta(last_answer)
+    pdf_path = generar_pdf_con_pandoc(last_answer)
     return gr.File(value=pdf_path, visible=True)
-
-# 'query': 'Desde hace 4 años tengo dolor en la  articulación del dedo pulgar de las dos manos (he tenido que dejar de trabajar de masajista) y toda la vida he tenido hiperhidrosis en las manos, pies y axilas. Y de nacimiento escoliosis lumbar pronunciada y a los 27 años tuve ansiedad y ataques de pánico.'
-# 'query': 'dolor en la cadera que sube y baja de forma indistinta hacia el brazo derecho y dedo meñique o hacia la rodilla y dedos de los pies'
-# 'query': 'eccema o picor en las pantorrillas, que luego desaparece y se traslada al dorso de la mano'
-# 'query': 'tengo vértigo cuando subo a sitios altos'
 
 def crear_interfaz():
     with gr.Blocks(title="Chat Biodescodificación") as interfaz:
@@ -822,7 +551,6 @@ def crear_interfaz():
         )
 
     return interfaz
-
 
 def run():
     demo = crear_interfaz()

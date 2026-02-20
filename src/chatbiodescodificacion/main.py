@@ -229,11 +229,6 @@ def crear_interfaz():
             value="auto",
         )
 
-        chat = gr.Chatbot(
-            label="Conversación",
-            height=400,
-        )
-
         mensaje = gr.Textbox(
             label="Tu pregunta",
             placeholder="Ej: ¿Qué conflictos están relacionados con problemas digestivos?",
@@ -251,6 +246,11 @@ def crear_interfaz():
                 interactive=False  # ← deshabilitado inicialmente
             )
             archivo_pdf = gr.File(label="PDF generado", visible=False)
+
+        chat = gr.Chatbot(
+            label="Conversación",
+            height=400,
+        )
 
         examples_title = gr.Markdown("### 💡 Preguntas de ejemplo")
         examples_list = gr.Markdown()  # lista traducida

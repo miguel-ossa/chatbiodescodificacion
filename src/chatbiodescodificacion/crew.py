@@ -2,8 +2,8 @@ from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task, crew
 from crewai import LLM
 from dotenv import load_dotenv
-import os
-import re
+
+from .utils import *
 
 # Import the tools to make them available
 from .tools.tools import (
@@ -118,6 +118,14 @@ class Chatbiodescodificacion():
             llm=get_ollama_llm()
         )
 
+    @agent
+    def markdown_validator(self) -> Agent:
+        return Agent(
+            config=self.agents_config['markdown_validator'],
+            tools=[],  # de momento no necesita tools extra
+            llm=get_ollama_llm()
+        )
+
     @task
     def analyze_query_task(self) -> Task:
         return Task(config=self.tasks_config['analyze_query'])
@@ -125,6 +133,10 @@ class Chatbiodescodificacion():
     @task
     def search_dictionary_task(self) -> Task:
         return Task(config=self.tasks_config['search_dictionary'])
+
+    @task
+    def markdown_validate_task(self) -> Task:
+        return Task(config=self.tasks_config['markdown_validate'])
 
     # @task
     # def score_relevance_task(self) -> Task:
@@ -158,6 +170,7 @@ class Chatbiodescodificacion():
                 self.context_manager(),
                 self.validator(),
                 self.explainer(),
+                self.markdown_validator(),
             ],
             tasks=[
                 self.analyze_query_task(),
@@ -167,6 +180,7 @@ class Chatbiodescodificacion():
                 # self.adapt_context_task(),
                 # self.validate_results_task(),
                 self.generate_answer_task(),
+                self.markdown_validate_task(),
             ],
             process=Process.sequential,
             verbose=True,
@@ -196,6 +210,8 @@ class Chatbiodescodificacion():
         result = self.crew().kickoff(inputs=inputs)
         raw = result.raw
         cleaned = strip_large_json_blocks(raw)
+        cleaned = normalizar_simbolos_global(cleaned)
+        cleaned = limpiar_viñetas_huerfanas(cleaned)
         # Parse and return results
         try:
             # The result is a CrewResult object, we need to extract the final output

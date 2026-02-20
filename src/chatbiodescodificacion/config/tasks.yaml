@@ -105,3 +105,13 @@ generate_answer:
   context:
     - analyze_query_task
     - search_dictionary_task
+
+markdown_validate:
+  description: |
+    Revisa y limpia el texto final en Markdown, asegurando que
+    no tenga caracteres extraños ni bloques JSON.
+  agent: markdown_validator
+  expected_output: |
+    Versión corregida del texto final, todavía en Markdown.
+  context:
+    - generate_answer_task

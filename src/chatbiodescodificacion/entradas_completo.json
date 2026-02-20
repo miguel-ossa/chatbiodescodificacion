@@ -1,23 +1,5 @@
 [
   {
-    "termino": "BIODESCODIFICACIÓN",
-    "definicion": "La biodescodificación (también llamada biodecodificación o bioneuroemoción) es una corriente de medicina alternativa que afirma que muchas enfermedades físicas tienen un origen emocional o “conflictos inconscientes” y que, al identificarlos y “descodificarlos”, el cuerpo podría sanar.\nPropone que cada síntoma o enfermedad corresponde a un conflicto emocional específico (miedo, culpa, rabia, trauma, etc.) que el cuerpo “inscribe” en un órgano o tejido.\nSe presenta como una herramienta complementaria, no como sustituto de la medicina convencional, orientada a “descodificar” la causa de la enfermedad en el “inconsciente biológico” o en las células.\nEl terapeuta explora la historia emocional, creencias, traumas y antecedentes familiares del paciente para buscar un conflicto asociado al síntoma (llamado a veces “bioshock”).\nLa idea es que, al tomar consciencia de ese conflicto y “liberarlo” mediante conversación, ejercicios emocionales o simbólicos, se “activan nuevos códigos” en las células y se favorecería la recuperación.\nSuele sostener que las células guardan información de la historia personal y del árbol genealógico (lo que algunas corrientes llaman “constelaciones familiares” o memorias transgeneracionales).\nPor eso muchas escuelas de biodescodificación trabajan con conflictos de la infancia, patrones de pensamiento limitantes y supuestos traumas heredados.\n",
-    "tecnico": "",
-    "sentido_biologico": "",
-    "conflicto": "",
-    "referencias_cruzadas": []
-  },
-  {
-    "termino": "ABARTROSIS",
-    "definicion": "",
-    "tecnico": "",
-    "sentido_biologico": "",
-    "conflicto": "",
-    "referencias_cruzadas": [
-      "LUXACIÓN"
-    ]
-  },
-  {
     "termino": "ABASIA",
     "definicion": "Incapacidad para caminar normalmente o para mantenerse en pie, sin que exista ningún trastorno de la musculatura. Suele ir asociado a enfermedades neurológicas tipo párkinson, accidente cerebro vascular (ACV) o hidrocefalia.",
     "tecnico": "3ª Etapa Embrionaria. Conflictos de desvalorización, miedo y culpabilidad.",
@@ -2756,6 +2738,24 @@
       "CÁNCER de VESÍCULA BILIAR",
       "CÓLICO BILIAR",
       "VESÍCULA BILIAR"
+    ]
+  },
+    {
+    "termino": "BIODESCODIFICACIÓN",
+    "definicion": "La biodescodificación (también llamada biodecodificación o bioneuroemoción) es una corriente de medicina alternativa que afirma que muchas enfermedades físicas tienen un origen emocional o “conflictos inconscientes” y que, al identificarlos y “descodificarlos”, el cuerpo podría sanar.\nPropone que cada síntoma o enfermedad corresponde a un conflicto emocional específico (miedo, culpa, rabia, trauma, etc.) que el cuerpo “inscribe” en un órgano o tejido.\nSe presenta como una herramienta complementaria, no como sustituto de la medicina convencional, orientada a “descodificar” la causa de la enfermedad en el “inconsciente biológico” o en las células.\nEl terapeuta explora la historia emocional, creencias, traumas y antecedentes familiares del paciente para buscar un conflicto asociado al síntoma (llamado a veces “bioshock”).\nLa idea es que, al tomar consciencia de ese conflicto y “liberarlo” mediante conversación, ejercicios emocionales o simbólicos, se “activan nuevos códigos” en las células y se favorecería la recuperación.\nSuele sostener que las células guardan información de la historia personal y del árbol genealógico (lo que algunas corrientes llaman “constelaciones familiares” o memorias transgeneracionales).\nPor eso muchas escuelas de biodescodificación trabajan con conflictos de la infancia, patrones de pensamiento limitantes y supuestos traumas heredados.\n",
+    "tecnico": "",
+    "sentido_biologico": "",
+    "conflicto": "",
+    "referencias_cruzadas": []
+  },
+  {
+    "termino": "ABARTROSIS",
+    "definicion": "",
+    "tecnico": "",
+    "sentido_biologico": "",
+    "conflicto": "",
+    "referencias_cruzadas": [
+      "LUXACIÓN"
     ]
   },
   {

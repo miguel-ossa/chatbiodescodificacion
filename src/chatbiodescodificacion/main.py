@@ -193,9 +193,6 @@ def chat_fn(message, history, last_answer):
 
     full = result.get("final_output") or result.get("results") or ""
 
-    # NORMALIZAR INMEDIATAMENTE DESPUÉS DE OBTENER EL RESULTADO
-    full = normalizar_simbolos_global(full)
-
     # Añadimos los dos mensajes al history
     history = history + [
         {"role": "user", "content": message},

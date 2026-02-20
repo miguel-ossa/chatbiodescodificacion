@@ -191,3 +191,30 @@ def generar_pdf_con_pandoc(texto_markdown: str) -> str:
 
     return pdf_path
 
+BULLET_ONLY = {"•", "-", "*", "·", "●", "○", "■", "▪", "▫"}
+
+def limpiar_viñetas_huerfanas(text: str) -> str:
+    if not text:
+        return text
+
+    lines = text.splitlines()
+    cleaned = []
+
+    for line in lines:
+        stripped = line.strip()
+
+        # 1) Línea completamente vacía o solo bullet
+        if stripped == "" or stripped in BULLET_ONLY:
+            # la dejamos pasar solo si es un salto entre párrafos;
+            # si quieres borrarla siempre, simplemente `continue`
+            cleaned.append("")  # o `continue` si quieres eliminarla del todo
+            continue
+
+        # 2) Líneas tipo "-   " (guion + espacios/no-break)
+        if re.fullmatch(r"[-•*·●○■▪▫\s]+", stripped):
+            cleaned.append("")
+            continue
+
+        cleaned.append(line)
+
+    return "\n".join(cleaned)

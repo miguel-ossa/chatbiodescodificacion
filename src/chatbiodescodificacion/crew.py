@@ -30,7 +30,7 @@ OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
 # Create a custom function to get the LLM with Ollama settings
 def get_ollama_llm():
-    print("OLLAMA_HOST =", OLLAMA_HOST)
+    #print("OLLAMA_HOST =", OLLAMA_HOST)
     return LLM(
         model="gpt-oss:120b-cloud",        # el nombre del modelo en Ollama
         base_url=f"{OLLAMA_HOST}/v1",  # endpoint OpenAI-compatible de Ollama

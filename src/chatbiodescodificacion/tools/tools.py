@@ -17,6 +17,7 @@ def normalize(text: str) -> str:
 
 
 class TextAnalyzerTool(BaseTool):
+    """Analiza el texto para extraer términos clave y contexto para las queries"""
     name: str = "Text Analyzer"
     description: str = "Analyzes text to extract key terms, context, and intent for biodescodification queries"
 
@@ -25,6 +26,7 @@ class TextAnalyzerTool(BaseTool):
         return f"Analyzed query: '{query}' - Extracted key terms and context"
 
 class BiodescodificationThesaurusTool(BaseTool):
+    """Provee sinónimos y términos relacionados para los conceptos en biodescodificación"""
     name: str = "Biodescodification Thesaurus"
     description: str = "Provides synonyms and related terms for biodescodification concepts"
 
@@ -33,6 +35,7 @@ class BiodescodificationThesaurusTool(BaseTool):
         return f"Synonyms and related terms for: '{query}'"
 
 class DictionarySearchTool(BaseTool):
+    """Busca entradas en el diccionario JSON"""
     name: str = "dictionary_search"
     description: str = "Busca entradas en el diccionario JSON procesado por el campo 'termino'."
 
@@ -91,6 +94,7 @@ class DictionarySearchTool(BaseTool):
         return "\n\n".join(partes)
 
 class VectorDatabaseTool(BaseTool):
+    """Ejecuta búsquedas semánticas usando vector embeddings"""
     name: str = "Vector Database Search"
     description: str = "Performs semantic similarity searches using vector embeddings"
 
@@ -98,6 +102,7 @@ class VectorDatabaseTool(BaseTool):
         return f"Vector search for: '{query}'"
 
 class FuzzyMatcherTool(BaseTool):
+    """Coteja entradas con ligeras variaciones o typos"""
     name: str = "Fuzzy Matcher"
     description: str = "Matches entries with slight variations or typos"
 
@@ -105,6 +110,7 @@ class FuzzyMatcherTool(BaseTool):
         return f"Fuzzy matching for: '{query}'"
 
 class RankingAlgorithmTool(BaseTool):
+    """Puntúa resultados de búsqueda basándose en factores relevanes"""
     name: str = "ranking_algorithm"
     description: str = "Ranks search results based on relevance factors"
 
@@ -112,6 +118,7 @@ class RankingAlgorithmTool(BaseTool):
         return results
 
 class SemanticScoringTool(BaseTool):
+    """Puntúa resultados basados en similitud semántica"""
     name: str = "semantic_scoring"
     description: str = "Scores results based on semantic similarity"
 
@@ -120,6 +127,7 @@ class SemanticScoringTool(BaseTool):
         return results
 
 class ContextAnalyzerTool(BaseTool):
+    """Analiza el contexto para una relevancia de resultados mejorada"""
     name: str = "context_analyzer"
     description: str = "Analyzes context for better result relevance"
 
@@ -127,6 +135,7 @@ class ContextAnalyzerTool(BaseTool):
         return f"Context analysis for: '{query}'"
 
 class ThesaurusTool(BaseTool):
+    """Expande las queries con sinónimos y términos relacionados"""
     name: str = "Thesaurus"
     description: str = "Expands queries with synonyms and related terms"
 
@@ -134,6 +143,7 @@ class ThesaurusTool(BaseTool):
         return f"Expanding query with synonyms: '{query}'"
 
 class WordEmbeddingTool(BaseTool):
+    """Usa word embeddings para expansión semántica"""
     name: str = "Word Embedding"
     description: str = "Uses word embeddings for semantic expansion"
 
@@ -141,6 +151,7 @@ class WordEmbeddingTool(BaseTool):
         return f"Word embedding analysis for: '{query}'"
 
 class DomainVocabularyTool(BaseTool):
+    """Proporciona expansión de vocabulario de dominio específico"""
     name: str = "Domain Vocabulary"
     description: str = "Provides domain-specific vocabulary expansion"
 
@@ -148,6 +159,7 @@ class DomainVocabularyTool(BaseTool):
         return f"Domain vocabulary expansion for: '{query}'"
 
 class MemoryRetrievalTool(BaseTool):
+    """Recupera la historia y el contexto de la sesión"""
     name: str = "Memory Retrieval"
     description: str = "Retrieves session history and context"
 
@@ -155,6 +167,7 @@ class MemoryRetrievalTool(BaseTool):
         return f"Retrieving session history for: '{session_id}'"
 
 class ConversationTrackerTool(BaseTool):
+    """Realiza un seguimiento de los patrones de conversación y las preferencias de los usuarios."""
     name: str = "conversation_tracker"
     description: str = "Tracks conversation patterns and user preferences"
 
@@ -163,6 +176,7 @@ class ConversationTrackerTool(BaseTool):
 
 
 class PersonalizationTool(BaseTool):
+    """Adapta búsquedas basadas en la preferencia y la historia del usuario"""
     name: str = "Personalization"
     description: str = "Adapts search based on user preferences and history"
 
@@ -170,6 +184,7 @@ class PersonalizationTool(BaseTool):
         return f"Personalizing search based on: {user_preferences}"
 
 class ConsistencyCheckerTool(BaseTool):
+    """Cheque la consistencia de los resultados de la búsqueda"""
     name: str = "consistency_checker"
     description: str = "Checks consistency of search results"
 
@@ -178,6 +193,7 @@ class ConsistencyCheckerTool(BaseTool):
         return results
 
 class AccuracyValidatorTool(BaseTool):
+    """Valida la exactitud de los resultados de búsqueda"""
     name: str = "accuracy_validator"
     description: str = "Validates accuracy of search results"
 
@@ -186,6 +202,7 @@ class AccuracyValidatorTool(BaseTool):
         return results
 
 class QualityAssuranceTool(BaseTool):
+    """Asegura la calidad general de los resultados de búsqueda"""
     name: str = "quality_assurance"
     description: str = "Ensures overall quality of search results"
 

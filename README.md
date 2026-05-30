@@ -1,31 +1,52 @@
-# Funcionalidades del Chat de Biodescodificación
+# 🧬 ChatBiodescodificación
 
-## Descripción General
-El Chat de Biodescodificación es una herramienta interactiva que permite consultar y entender los conceptos del método de biodescodificación. Esta aplicación ayuda a descifrar el significado biológico detrás de síntomas físicos y condiciones de salud mediante una conversación natural.
+AI-powered chat to decode the biological meaning behind physical symptoms using biodecoding — a multi-agent CrewAI system over a 2096-entry knowledge base.
 
-## Funcionalidades Principales
+**ChatBiodescodificación** is an interactive AI chat that interprets physical symptoms through the lens of biodecoding (biopsychology). It uses a CrewAI multi-agent pipeline — query analysis, dictionary search, semantic scoring, context management, and quality validation — running over a 2096-entry biodecoding thesaurus.
 
-### 1. Consulta de Síntomas y Condiciones de Salud
+## Tech Stack
+
+- **CrewAI** — multi-agent orchestration (7 specialized agents)
+- **Gradio** — web UI with i18n (ES, EN, FR, DE, PT, ZH)
+- **Ollama / Cloud LLMs** — configurable LLM backend (local or remote)
+- **Docker** — one-command self-hosted deployment
+
+## Quick Start
+
+```bash
+# Docker (recommended)
+./start_docker.sh
+
+# Or local
+python -m chatbiodescodificacion.main
+```
+
+UI available at `http://localhost:7860`.
+
+## Funcionalidades del Chat de Biodescodificación
+
+### Funcionalidades Principales
+
+#### 1. Consulta de Síntomas y Condiciones de Salud
 - **Búsqueda de síntomas**: Puedes preguntar sobre cualquier síntoma o condición física que estés experimentando
 - **Análisis de patrones**: El sistema interpreta tu consulta para encontrar conexiones biológicas relevantes
 - **Consultas específicas**: Puedes hacer preguntas como "¿Qué conflictos están relacionados con problemas digestivos?" o "Sentido biológico de las alergias"
 
-### 2. Exploración del Diccionario de Biodescodificación
+#### 2. Exploración del Diccionario de Biodescodificación
 - **Acceso a 2096 entradas**: El diccionario contiene una amplia base de conocimiento sobre biodescodificación
 - **Búsqueda por término**: Encuentra información sobre cualquier término biológico o concepto
 - **Relaciones cruzadas**: Descubre conexiones entre diferentes conceptos y síntomas
 
-### 3. Respuestas Detalladas y Personalizadas
+#### 3. Respuestas Detalladas y Personalizadas
 - **Explicaciones biológicas**: Cada respuesta incluye el sentido biológico detrás de los síntomas
 - **Conflictos emocionales**: Se relacionan los síntomas con posibles conflictos emocionales subyacentes
 - **Contexto completo**: Se proporciona información contextual sobre cada concepto
 
-### 4. Interfaz Intuitiva
+#### 4. Interfaz Intuitiva
 - **Chat conversacional**: Interfaz de chat simple y fácil de usar
-- **Ejemplos predefinidos**: Incluye ejemplos para guiar la consulta
 - **Historial de conversación**: Mantiene el contexto de la conversación
 - **Limpieza de historial**: Opción para comenzar una nueva conversación
-- **Cambio de idioma**: Interfaz completamente traducida al español (es), chino (zh), portugués (pt), inglés (en), francés (fr) y alemán (de)
+- **Cambio de idioma**: Interfaz traducida al español (es), chino (zh), portugués (pt), inglés (en), francés (fr) y alemán (de)
 - **Consulta en cualquier idioma**: Puedes hacer consultas en cualquier otro idioma
 
 ## Ejemplos de Consultas
@@ -45,7 +66,6 @@ El Chat de Biodescodificación es una herramienta interactiva que permite consul
 2. Explorar conceptos biológicos del método de biodescodificación
 3. Entender las conexiones entre síntomas y conflictos emocionales
 4. Obtener explicaciones detalladas basadas en una base de conocimiento extensa
-5. Usar ejemplos para guiar tus consultas
-6. Descargar un archivo PDF con el resultado de tu consulta
+5. Descargar un archivo PDF con el resultado de tu consulta
 
-Esta aplicación es ideal para personas interesadas en el método de biodescodificación, terapeutas, profesionales de la salud y cualquier persona que desee comprender mejor el significado biológico de sus síntomas.
+Ideal para personas interesadas en biodescodificación, terapeutas, profesionales de la salud y cualquier persona que desee comprender mejor el significado biológico de sus síntomas.

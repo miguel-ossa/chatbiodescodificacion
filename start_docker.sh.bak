@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Precalentar SSH (evita primer timeout)
+ssh -o ConnectTimeout=10 -o BatchMode=yes mossa@192.168.1.90 'echo > /dev/null' || true
+
+# Variables app
+export FLYCTL_INSTALL="/Users/mossa/.fly"
+export PATH="$FLYCTL_INSTALL/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+#export OLLAMA_HOST="http://localhost:11434"
+
+echo
+echo "!! ¿Quieres limpiar recursos de Docker (docker system prune -af y docker volume prune -f)?"
+echo "   Esto borrará contenedores/paradas, imágenes sin usar, redes huérfanas y volúmenes no utilizados."
+read -r -t 10 -p "   Escribe 'y' en 10 segundos para proceder, o espera/otra cosa para saltar: " ANSWER || ANSWER=""
+
+if [ "$ANSWER" = "y" ]; then
+  echo "Limpiando recursos de Docker..."
+  docker system prune -af
+  docker volume prune -f
+else
+  echo "Limpieza de Docker omitida."
+  echo
+fi
+
+# Build limpio + up detached
+docker compose build --no-cache
+docker compose up 
+
+echo "✅  ChatBiodescodificacion corriendo en http://192.168.1.90:7860"
+echo "📊  Logs: docker compose logs -f"
+echo "🛑  Parar: docker compose down"
+
